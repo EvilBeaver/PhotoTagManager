@@ -1,0 +1,1 @@
+CREATE TABLE [files] ( [id] integer PRIMARY KEY AUTOINCREMENT NOT NULL, [name] char(100) NOT NULL);

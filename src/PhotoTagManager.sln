@@ -5,6 +5,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PhotoTagManager", "PhotoTag
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Tagger.Engine", "Tagger.Engine\Tagger.Engine.csproj", "{622D4F8A-2846-45B8-95C1-E516DD8FFFFB}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Tagger.Engine.Test", "Tagger.Engine.Test\Tagger.Engine.Test.csproj", "{5E1ED977-DB97-441B-A72B-02A90F7B7F71}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -19,6 +21,10 @@ Global
 		{622D4F8A-2846-45B8-95C1-E516DD8FFFFB}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{622D4F8A-2846-45B8-95C1-E516DD8FFFFB}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{622D4F8A-2846-45B8-95C1-E516DD8FFFFB}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5E1ED977-DB97-441B-A72B-02A90F7B7F71}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5E1ED977-DB97-441B-A72B-02A90F7B7F71}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5E1ED977-DB97-441B-A72B-02A90F7B7F71}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5E1ED977-DB97-441B-A72B-02A90F7B7F71}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
