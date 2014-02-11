@@ -1,0 +1,29 @@
+﻿<Window x:Class="PhotoTagManager.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:local="clr-namespace:PhotoTagManager"
+        Title="MainWindow" Height="350" Width="525">
+    <Grid Margin="5">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="30"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="102*"/>
+                <ColumnDefinition Width="100"/>
+            </Grid.ColumnDefinitions>
+
+            <Label>Folder:</Label>
+            <TextBox Margin="80,2,5,2" Name="txtPath"></TextBox>
+            <Button Grid.Column="1" Margin="3" Click="Button_Click">Scan</Button>
+            
+        </Grid>
+        
+        <local:PhotoView x:Name="mainView" Grid.Row="1">
+            
+        </local:PhotoView>
+        
+    </Grid>
+</Window>
