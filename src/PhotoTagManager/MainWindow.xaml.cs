@@ -34,5 +34,17 @@ namespace PhotoTagManager
             Task.Factory.StartNew(() => scanner.ScanFolder(path, "*.jpg", true))
                 .ContinueWith((x) => mainView.ItemsSource = x.Result, TaskScheduler.FromCurrentSynchronizationContext());
         }
+
+        private void Button_Click_1(object sender, RoutedEventArgs e)
+        {
+            var db = new Tagger.Engine.DAL.Database("tagsbase.db3");
+            Tagger.Engine.DAL.DatabaseService.RegisterInstance(db);
+            var mngr = new Tagger.Engine.StorageManager();
+
+            var scanner = new Tagger.Engine.FileScanner();
+            var path = txtPath.Text;
+            var fileData = scanner.ScanFolder(path, "*.jpg", true);
+            mngr.UpdateStorage(fileData);
+        }
     }
 }

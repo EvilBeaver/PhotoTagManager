@@ -17,8 +17,11 @@
 
             <Label>Folder:</Label>
             <TextBox Margin="80,2,5,2" Name="txtPath"></TextBox>
-            <Button Grid.Column="1" Margin="3" Click="Button_Click">Scan</Button>
-            
+            <StackPanel Grid.Column="1" Margin="3" Orientation="Horizontal">
+                <Button Click="Button_Click" Content="Scan" Height="24"/>
+                <Button Click="Button_Click_1">Save</Button>
+            </StackPanel>
+
         </Grid>
         
         <local:PhotoView x:Name="mainView" Grid.Row="1">

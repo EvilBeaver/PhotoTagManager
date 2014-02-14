@@ -94,12 +94,12 @@ namespace PhotoTagManager
         }
 
 
-        private void RefreshThumbnail()
+        public void RefreshThumbnail()
         {
             Task.Factory.StartNew(() =>
                 {
                     var tb = GetThumbnail();
-                    _ctx.Send(new SendOrPostCallback((state) => Thumbnail = tb), null);
+                    _ctx.Post(new SendOrPostCallback((state) => Thumbnail = tb), null);
                 });
         }
 
