@@ -49,7 +49,10 @@
     <Compile Include="DAL\Abstract\Identifier.cs" />
     <Compile Include="DAL\Abstract\IPersistable.cs" />
     <Compile Include="DAL\Database.cs" />
+    <Compile Include="DAL\DatabaseService.cs" />
     <Compile Include="DAL\FileRepository.cs" />
+    <Compile Include="DAL\IDatabase.cs" />
+    <Compile Include="DAL\RepositoryBase.cs" />
     <Compile Include="FileLink.cs" />
     <Compile Include="FileScanner.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
@@ -58,6 +61,7 @@
       <DesignTime>True</DesignTime>
       <DependentUpon>Resources.resx</DependentUpon>
     </Compile>
+    <Compile Include="StorageManager.cs" />
     <Compile Include="TagDescription.cs" />
   </ItemGroup>
   <ItemGroup>

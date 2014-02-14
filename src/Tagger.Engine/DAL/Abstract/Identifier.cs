@@ -7,6 +7,10 @@ namespace Tagger.Engine.DAL
 {
     struct Identifier
     {
-        internal int Value { get; set; }
+        internal int? Value { get; set; }
+        public bool IsEmpty()
+        {
+            return Value == null;
+        }
     }
 }

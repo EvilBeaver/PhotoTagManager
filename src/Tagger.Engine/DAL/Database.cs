@@ -8,24 +8,23 @@ using System.Text;
 
 namespace Tagger.Engine.DAL
 {
-    public class Database
+    public class Database : Tagger.Engine.DAL.IDatabase
     {
-        private string _dbName;
+        private string _dbFileName;
         
-        public Database(string dbName)
+        public Database(string dbFileName)
         {
-            _dbName = dbName;
+            _dbFileName = dbFileName;
         }
 
-        public void Create()
+        private void Create()
         {
-            string databaseFullName = DatabaseFileFullName();
             if (DatabaseFileExists())
             {
-                throw new InvalidOperationException(String.Format("Database file {0} already exists", databaseFullName));
+                throw new InvalidOperationException(String.Format("Database file {0} already exists", _dbFileName));
             }
 
-            SQLiteConnection.CreateFile(databaseFullName);
+            SQLiteConnection.CreateFile(_dbFileName);
 
             using (var con = OpenConnection())
             {
@@ -38,22 +37,17 @@ namespace Tagger.Engine.DAL
             
         }
 
-        private string DatabaseFileFullName()
-        {
-            var asm = System.Reflection.Assembly.GetCallingAssembly();
-            var asmPath = System.IO.Path.GetDirectoryName(asm.Location);
-            return System.IO.Path.Combine(asmPath, _dbName);
-        }
-
         private bool DatabaseFileExists()
         {
-            return System.IO.File.Exists(DatabaseFileFullName());
+            return System.IO.File.Exists(_dbFileName);
         }
 
         public SQLiteConnection OpenConnection()
         {
+            Init();
+
             SQLiteConnectionStringBuilder conString = new SQLiteConnectionStringBuilder();
-            conString.DataSource = _dbName;
+            conString.DataSource = _dbFileName;
             SQLiteConnection con = new SQLiteConnection();
             con.ConnectionString = conString.ToString();
             try

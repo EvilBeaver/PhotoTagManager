@@ -10,6 +10,10 @@ namespace Tagger.Engine
         private Lazy<string> _md5;
         private object _lock = new object();
 
+        private FileLink()
+        {
+        }
+
         private FileLink(string path)
         {
             FullName = path;
@@ -39,19 +43,34 @@ namespace Tagger.Engine
 
         }
 
-        public string FullName { get; private set; }
-        public string Name { get; private set; }
+        public string FullName { get; internal set; }
+        public string Name { get; internal set; }
         public string MD5 
         {
             get
             {
                 return _md5.Value;
             }
+            internal set
+            {
+                string valCopy = value;
+                _md5 = new Lazy<string>(()=>valCopy);
+            }
         }
 
         public static FileLink Create(string path)
         {
             return new FileLink(path);
+        }
+
+        public static FileLink CreateEmpty()
+        {
+            return new FileLink();
+        }
+
+        public override string ToString()
+        {
+            return FullName;
         }
     }
 }

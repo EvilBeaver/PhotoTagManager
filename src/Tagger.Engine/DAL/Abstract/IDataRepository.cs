@@ -11,6 +11,7 @@ namespace Tagger.Engine.DAL
         void Add(IPersistable<T> item);
         void Remove(IPersistable<T> item);
         void Write(IPersistable<T> item);
+        void WriteRange(IEnumerable<IPersistable<T>> range);
         IPersistable<T> FindByKey(Identifier key);
         IEnumerable<IPersistable<T>> GetAll();
     }
