@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.Concurrent;
 using System.ComponentModel;
 using System.Linq;
 using System.Text;
@@ -41,11 +42,41 @@ namespace PhotoTagManager
                 _itemsSource = value;
                 var ctx = SynchronizationContext.Current;
 
-                Task.Factory.StartNew<IList<ListItem>>(() => _itemsSource.AsParallel().Select((x) => new ListItem(x, ctx)).ToList(),
-                    new CancellationToken(),
-                    TaskCreationOptions.None,
-                    TaskScheduler.Default)
-                    .ContinueWith((x) => lvItems.ItemsSource = x.Result, TaskScheduler.FromCurrentSynchronizationContext());
+                var items = _itemsSource.Select((x) => new ListItem(x, ctx)).ToList();
+                lvItems.ItemsSource = items;
+
+                var thumbnails = new BlockingCollection<KeyValuePair<ListItem,ImageSource>>();
+                Task.Factory.StartNew(() =>
+                    {
+                        try
+                        {
+                            Parallel.ForEach(items, (x) =>
+                                {
+                                    var tb = x.GetThumbnail();
+                                    thumbnails.Add(new KeyValuePair<ListItem, ImageSource>(x, tb));
+                                });
+                        }
+                        finally
+                        {
+                            thumbnails.CompleteAdding();
+                        }
+
+                    },new CancellationToken(), TaskCreationOptions.LongRunning, TaskScheduler.Default);
+
+                Task.Factory.StartNew(() =>
+                    {
+                        foreach (var item in thumbnails.GetConsumingEnumerable())
+                        {
+                            ctx.Post(new SendOrPostCallback((state) => item.Key.Thumbnail = item.Value), null);
+                        }
+                    }, new CancellationToken(), TaskCreationOptions.LongRunning, TaskScheduler.Default)
+                    .ContinueWith((x) => { GC.Collect(); });
+
+                //Task.Factory.StartNew<IList<ListItem>>(() => _itemsSource.AsParallel().Select((x) => new ListItem(x, ctx)).ToList(),
+                //    new CancellationToken(),
+                //    TaskCreationOptions.None,
+                //    TaskScheduler.Default)
+                //    .ContinueWith((x) => lvItems.ItemsSource = x.Result, TaskScheduler.FromCurrentSynchronizationContext());
             }
         }
 
@@ -61,10 +92,10 @@ namespace PhotoTagManager
         {
             _link = link;
             _ctx = context;
-            RefreshThumbnail();
+            //RefreshThumbnail();
         }
 
-        private ImageSource GetThumbnail()
+        public ImageSource GetThumbnail()
         {
             BitmapImage bi = new BitmapImage();
             bi.BeginInit();
@@ -86,7 +117,7 @@ namespace PhotoTagManager
             {
                 return _thumbnail;
             }
-            private set
+            set
             {
                 _thumbnail = value;
                 OnPropertyChanged("Thumbnail");
@@ -96,11 +127,14 @@ namespace PhotoTagManager
 
         public void RefreshThumbnail()
         {
-            Task.Factory.StartNew(() =>
-                {
-                    var tb = GetThumbnail();
-                    _ctx.Post(new SendOrPostCallback((state) => Thumbnail = tb), null);
-                });
+            var tb = GetThumbnail();
+            _ctx.Post(new SendOrPostCallback((state) => Thumbnail = tb), null);
+
+            //Task.Factory.StartNew(() =>
+            //    {
+            //        var tb = GetThumbnail();
+            //        _ctx.Post(new SendOrPostCallback((state) => Thumbnail = tb), null);
+            //    });
         }
 
         #region INotifyPropertyChanged Members
