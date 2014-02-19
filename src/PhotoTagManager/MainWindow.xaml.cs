@@ -32,7 +32,7 @@ namespace PhotoTagManager
             var path = txtPath.Text;
 
             Task.Factory.StartNew(() => scanner.ScanFolder(path, "*.jpg", true))
-                .ContinueWith((x) => mainView.ItemsSource = x.Result, TaskScheduler.FromCurrentSynchronizationContext());
+                .ContinueWith((x) => mainView.SetItemsSource(x.Result), TaskScheduler.FromCurrentSynchronizationContext());
         }
 
         private void Button_Click_1(object sender, RoutedEventArgs e)
