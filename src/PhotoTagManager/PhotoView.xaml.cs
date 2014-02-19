@@ -24,9 +24,12 @@ namespace PhotoTagManager
     /// </summary>
     public partial class PhotoView : UserControl
     {
+        IThumbnailProvider _thumbnailer;
+
         public PhotoView()
         {
             InitializeComponent();
+            _thumbnailer = new BitmapImageThumbnailProvider();
         }
 
         public void SetItemsSource(IEnumerable<FileLink> source)
@@ -36,8 +39,6 @@ namespace PhotoTagManager
             var items = source.Select((x) => new ListItem(x)).ToList();
             lvItems.ItemsSource = items;
 
-            var thumbnailer = new BitmapImageThumbnailProvider();
-
             Task.Factory.StartNew(() =>
                {
                    Parallel.ForEach(Partitioner.Create(0, items.Count), (range) =>
@@ -45,7 +46,7 @@ namespace PhotoTagManager
                            for (int i = range.Item1; i < range.Item2; i++)
                            {
                                var currentItem = items[i];
-                               var tb = thumbnailer.GetThumbnail(currentItem.FullName);
+                               var tb = _thumbnailer.GetThumbnail(currentItem.FullName);
                                ctx.Post(new SendOrPostCallback((state) => currentItem.Thumbnail = tb),null);
                            }
                        });
