@@ -36,7 +36,7 @@ namespace PhotoTagManager
         {
             var ctx = SynchronizationContext.Current;
 
-            var items = source.Select((x) => new ListItem(x)).ToList();
+            var items = source.Select((x) => new ImageListItem(x)).ToList();
             lvItems.ItemsSource = items;
 
             Task.Factory.StartNew(() =>
@@ -56,12 +56,12 @@ namespace PhotoTagManager
 
     }
 
-    class ListItem : INotifyPropertyChanged
+    class ImageListItem : INotifyPropertyChanged
     {
         Tagger.Engine.FileLink _link;
         ImageSource _thumbnail;
 
-        public ListItem(FileLink link)
+        public ImageListItem(FileLink link)
         {
             _link = link;
         }
