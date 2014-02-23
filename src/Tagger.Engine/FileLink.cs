@@ -2,13 +2,14 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using Tagger.Engine.DAL;
 
 namespace Tagger.Engine
 {
-    public class FileLink
+    public class FileLink : IPersistable
     {
         private Lazy<string> _md5;
-        private object _lock = new object();
+        private Identifier _databaseId;
 
         private FileLink()
         {
@@ -72,5 +73,21 @@ namespace Tagger.Engine
         {
             return FullName;
         }
+
+
+        #region IPersistable<FileLink> Members
+
+        Identifier IPersistable.Key
+        {
+            get { throw new NotImplementedException(); }
+            set { }
+        }
+
+        internal IPersistable AsPersistable()
+        {
+            return (IPersistable)this;
+        }
+
+        #endregion
     }
 }

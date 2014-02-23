@@ -5,7 +5,7 @@ using System.Text;
 
 namespace Tagger.Engine.DAL
 {
-    abstract class RepositoryBase<T> : IDataRepository<T>
+    abstract class RepositoryBase<T> : IDataRepository<T> where T : IPersistable
     {
         private IDatabase _db;
 
@@ -22,14 +22,14 @@ namespace Tagger.Engine.DAL
             }
         }
 
-        private bool IsNewObject(IPersistable<T> item)
+        private bool IsNewObject(T item)
         {
             return item.Key.IsEmpty();
         }
 
-        abstract protected void InternalAdd(IPersistable<T> item);
-        abstract protected void InternalRemove(IPersistable<T> item);
-        abstract protected void InternalWrite(IPersistable<T> item);
+        abstract protected void InternalAdd(T item);
+        abstract protected void InternalRemove(T item);
+        abstract protected void InternalWrite(T item);
         
         #region IDataRepository<T> Members
 
@@ -42,7 +42,7 @@ namespace Tagger.Engine.DAL
             }
         }
 
-        public void Add(IPersistable<T> item)
+        public void Add(T item)
         {
             if (!IsNewObject(item))
             {
@@ -52,7 +52,7 @@ namespace Tagger.Engine.DAL
             InternalAdd(item);
         }
 
-        public void Remove(IPersistable<T> item)
+        public void Remove(T item)
         {
             if (!IsNewObject(item))
             {
@@ -60,7 +60,7 @@ namespace Tagger.Engine.DAL
             }
         }
 
-        public void Write(IPersistable<T> item)
+        public void Write(T item)
         {
             if (IsNewObject(item))
             {
@@ -72,17 +72,17 @@ namespace Tagger.Engine.DAL
             }
         }
 
-        public void WriteRange(IEnumerable<IPersistable<T>> range)
+        public void WriteRange(IEnumerable<T> range)
         {
             throw new NotImplementedException();
         }
 
-        public virtual IPersistable<T> FindByKey(Identifier key)
+        public virtual T FindByKey(Identifier key)
         {
             throw new NotImplementedException();
         }
 
-        public virtual IEnumerable<IPersistable<T>> GetAll()
+        public virtual IEnumerable<T> GetAll()
         {
             throw new NotImplementedException();
         }

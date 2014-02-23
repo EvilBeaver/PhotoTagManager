@@ -9,10 +9,10 @@ namespace Tagger.Engine.DAL
     class FileRepository : RepositoryBase<FileLink>
     {
    
-        protected override void InternalAdd(IPersistable<FileLink> item)
+        protected override void InternalAdd(FileLink item)
         {
             var sb = new StringBuilder();
-            var data = item.Value;
+            var data = item;
             sb.AppendLine("INSERT INTO [files]");
             sb.AppendLine("([name],[fullname],[md5])");
             sb.AppendLine("VALUES(?,?,?)");
@@ -31,20 +31,20 @@ namespace Tagger.Engine.DAL
             }
         }
 
-        protected override void InternalRemove(IPersistable<FileLink> item)
+        protected override void InternalRemove(FileLink item)
         {
             using (var con = Database.OpenConnection())
             {
                 using (var cmd = con.CreateCommand())
                 {
                     cmd.CommandText = "DELETE FROM [files] WHERE [id] = ?";
-                    cmd.Parameters.AddWithValue("id", item.Key.Value);
+                    cmd.Parameters.AddWithValue("id", item.AsPersistable().Key.Value);
                     cmd.ExecuteNonQuery();
                 }
             }
         }
 
-        protected override void InternalWrite(IPersistable<FileLink> item)
+        protected override void InternalWrite(FileLink item)
         {
             using (var con = Database.OpenConnection())
             {
@@ -57,16 +57,16 @@ namespace Tagger.Engine.DAL
                         [md5] = ? 
                     WHERE [id]=?";
 
-                    cmd.Parameters.AddWithValue("name", item.Value.Name);
-                    cmd.Parameters.AddWithValue("fullname", item.Value.FullName);
-                    cmd.Parameters.AddWithValue("md5", item.Value.MD5);
-                    cmd.Parameters.AddWithValue("id", item.Key.Value);
+                    cmd.Parameters.AddWithValue("name", item.Name);
+                    cmd.Parameters.AddWithValue("fullname", item.FullName);
+                    cmd.Parameters.AddWithValue("md5", item.MD5);
+                    cmd.Parameters.AddWithValue("id", item.AsPersistable().Key.Value);
                     cmd.ExecuteNonQuery();
                 }
             }
         }
 
-        public override IPersistable<FileLink> FindByKey(Identifier key)
+        public override FileLink FindByKey(Identifier key)
         {
             if (key.IsEmpty())
             {
@@ -103,7 +103,7 @@ namespace Tagger.Engine.DAL
 
         }
 
-        public IPersistable<FileLink> FindByFullPath(string path)
+        public FileLink FindByFullPath(string path)
         {
             if (String.IsNullOrWhiteSpace(path))
             {
@@ -141,22 +141,21 @@ namespace Tagger.Engine.DAL
         }
 
 
-        private static IPersistable<FileLink> Hydrate(DbDataReader data)
+        private static FileLink Hydrate(DbDataReader data)
         {
             var link = FileLink.CreateEmpty();
             link.Name = data.GetString(0);
             link.FullName = data.GetString(1);
             link.MD5 = data.GetString(2);
+            link.AsPersistable().Key = new Identifier() { Value = data.GetInt32(3) };
 
-            var persistable = FileLinkPersistor.Create(link);
-            persistable.Key = new Identifier() { Value = data.GetInt32(3) };
+            return link;
 
-            return persistable;
         }
 
-        public override IEnumerable<IPersistable<FileLink>> GetAll()
+        public override IEnumerable<FileLink> GetAll()
         {
-            List<IPersistable<FileLink>> result = new List<IPersistable<FileLink>>();
+            List<FileLink> result = new List<FileLink>();
             
             using (var con = Database.OpenConnection())
             {
@@ -176,51 +175,11 @@ namespace Tagger.Engine.DAL
             return result;
         }
 
-        public IEnumerable<IPersistable<FileLink>> GetByPathBase(string pathBase)
+        public IEnumerable<FileLink> GetByPathBase(string pathBase)
         {
             return null;
         }
     }
 
-    class FileLinkPersistor : IPersistable<FileLink>
-    {
-        private Identifier _id;
-        private FileLink _data;
-
-        private FileLinkPersistor(FileLink data)
-        {
-            _data = data;
-        }
-
-        #region IPersistable<FileLink> Members
-
-        public Identifier Key
-        {
-            get 
-            {
-                return _id; 
-            }
-            internal set
-            {
-                _id = value;
-            }
-        }
-
-        public FileLink Value
-        {
-            get { return _data; }
-        }
-
-        #endregion
-
-        public override string ToString()
-        {
-            return Value.ToString() + "#" + Key.Value.ToString();
-        }
-
-        public static FileLinkPersistor Create(FileLink data)
-        {
-            return new FileLinkPersistor(data);
-        }
-    }
+    
 }

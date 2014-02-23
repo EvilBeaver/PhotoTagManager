@@ -5,9 +5,8 @@ using System.Text;
 
 namespace Tagger.Engine.DAL
 {
-    interface IPersistable<T>
+    interface IPersistable
     {
-        Identifier Key { get; }
-        T Value { get; }
+        Identifier Key { get; set; }
     }
 }
