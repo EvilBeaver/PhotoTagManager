@@ -24,33 +24,132 @@ namespace PhotoTagManager
     /// </summary>
     public partial class PhotoView : UserControl
     {
-        IThumbnailProvider _thumbnailer;
+        private IThumbnailProvider _thumbnailer;
+        private IList<ImageListItem> _imageItems;
+        private CancellationTokenSource _cancelThumbnailsUpdate;
 
         public PhotoView()
         {
             InitializeComponent();
             _thumbnailer = new BitmapImageThumbnailProvider();
+            
         }
+
+
+        #region Scaling properties
+
+        public int ImageSizeFactor
+        {
+            get { return (int)GetValue(ImageSizeFactorProperty); }
+            set { SetValue(ImageSizeFactorProperty, value); }
+        }
+
+        // Using a DependencyProperty as the backing store for ImageSizeFactor.  This enables animation, styling, binding, etc...
+        public static readonly DependencyProperty ImageSizeFactorProperty =
+            DependencyProperty.Register("ImageSizeFactor", typeof(int), typeof(PhotoView), 
+            new PropertyMetadata(1, ScalingFactorChangedHandler));
+
+        private static void ScalingFactorChangedHandler(DependencyObject obj, DependencyPropertyChangedEventArgs args)
+        {
+            var photoView = obj as PhotoView;
+            if (photoView != null)
+            {
+                const int X_PROPORTION = 3;
+                const int Y_PROPORTION = 4;
+
+                var newX = (double)ScaleXProperty.DefaultMetadata.DefaultValue * (int)args.NewValue;
+                var newY = newX * Y_PROPORTION / X_PROPORTION;
+                photoView.ScaleX = newX;
+                photoView.ScaleY = newY;
+
+                const int RESCAN_FACTOR = 3;
+                if ((int)args.OldValue <= RESCAN_FACTOR && (int)args.NewValue > RESCAN_FACTOR)
+                {
+                    photoView.UpdateThumbnails(ThumbnailQuality.High);
+                }
+                else if ((int)args.OldValue > RESCAN_FACTOR && (int)args.NewValue <= RESCAN_FACTOR)
+                {
+                    photoView.UpdateThumbnails(ThumbnailQuality.Normal);
+                }
+            }
+        }
+
+        public double ScaleX
+        {
+            get { return (double)GetValue(ScaleXProperty); }
+            set { SetValue(ScaleXProperty, value); }
+        }
+
+        // Using a DependencyProperty as the backing store for ScaleX.  This enables animation, styling, binding, etc...
+        public static readonly DependencyProperty ScaleXProperty =
+            DependencyProperty.Register("ScaleX", typeof(double), typeof(PhotoView), new PropertyMetadata(96.0));
+
+        public double ScaleY
+        {
+            get { return (double)GetValue(ScaleYProperty); }
+            set { SetValue(ScaleYProperty, value); }
+        }
+
+        // Using a DependencyProperty as the backing store for ScaleY.  This enables animation, styling, binding, etc...
+        public static readonly DependencyProperty ScaleYProperty =
+            DependencyProperty.Register("ScaleY", typeof(double), typeof(PhotoView), new PropertyMetadata(100.0));
+
+        #endregion
 
         public void SetItemsSource(IEnumerable<FileLink> source)
         {
-            var ctx = SynchronizationContext.Current;
-
             var items = source.Select((x) => new ImageListItem(x)).ToList();
             lvItems.ItemsSource = items;
+            _imageItems = items;
+
+            UpdateThumbnails(ThumbnailQuality.Normal);
+
+        }
+
+        private void UpdateThumbnails(ThumbnailQuality quality)
+        {
+            var ctx = SynchronizationContext.Current;
+            var canceller = new CancellationTokenSource();
+
+            if (_cancelThumbnailsUpdate != null)
+            {
+                _cancelThumbnailsUpdate.Cancel();
+            }
+
+            _cancelThumbnailsUpdate = canceller;
 
             Task.Factory.StartNew(() =>
-               {
-                   Parallel.ForEach(Partitioner.Create(0, items.Count), (range) =>
-                       {
-                           for (int i = range.Item1; i < range.Item2; i++)
-                           {
-                               var currentItem = items[i];
-                               var tb = _thumbnailer.GetThumbnail(currentItem.FullName);
-                               ctx.Post(new SendOrPostCallback((state) => currentItem.Thumbnail = tb),null);
-                           }
-                       });
-               }, new CancellationToken(), TaskCreationOptions.LongRunning, TaskScheduler.Default);
+            {
+                Parallel.ForEach(Partitioner.Create(0, _imageItems.Count), (range, loopState) =>
+                {
+                    bool isCancelled = false;
+                    for (int i = range.Item1; i < range.Item2; i++)
+                    {
+                        var currentItem = _imageItems[i];
+                        var tb = _thumbnailer.GetThumbnail(currentItem.FullName, quality);
+                        ctx.Post(new SendOrPostCallback((state) => currentItem.Thumbnail = tb), null);
+                        if (canceller.IsCancellationRequested)
+                        {
+                            isCancelled = true;
+                            break;
+                        }
+                    }
+
+                    if (isCancelled)
+                    {
+                        loopState.Stop();
+                    }
+
+                });
+
+                canceller.Dispose();
+                if (_cancelThumbnailsUpdate == canceller)
+                {
+                    _cancelThumbnailsUpdate = null;
+                }
+
+            }, 
+            CancellationToken.None, TaskCreationOptions.LongRunning, TaskScheduler.Default);
 
         }
 
@@ -105,9 +204,37 @@ namespace PhotoTagManager
 
         public ImageSource GetThumbnail(string imagePath)
         {
+            return GetThumbnail(imagePath, ThumbnailQuality.Normal);
+        }
+
+        public ImageSource GetThumbnail(string imagePath, ThumbnailQuality quality)
+        {
+            return GetThumbnailInternal(imagePath, TranslateQualitySetting(quality));
+        }
+
+        private int TranslateQualitySetting(ThumbnailQuality quality)
+        {
+            switch (quality)
+            {
+                case ThumbnailQuality.Normal:
+                    return 200;
+                case ThumbnailQuality.High:
+                    return 400;
+                case ThumbnailQuality.Full:
+                    return 0;
+                default:
+                    throw new ArgumentException();
+            }
+        }
+
+        private static ImageSource GetThumbnailInternal(string imagePath, int compression)
+        {
             BitmapImage bi = new BitmapImage();
             bi.BeginInit();
-            bi.DecodePixelWidth = 200;
+            if (compression != 0)         
+            {
+                bi.DecodePixelWidth = compression; 
+            }
             bi.CacheOption = BitmapCacheOption.OnLoad;
             bi.UriSource = new Uri(imagePath);
             bi.EndInit();

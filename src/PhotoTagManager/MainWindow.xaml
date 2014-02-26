@@ -6,7 +6,8 @@
     <Grid Margin="5">
         <Grid.RowDefinitions>
             <RowDefinition Height="30"/>
-            <RowDefinition Height="*"/>
+            <RowDefinition Height="251*"/>
+            <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
         <Grid>
@@ -20,13 +21,17 @@
             <StackPanel Grid.Column="1" Margin="3" Orientation="Horizontal">
                 <Button Click="Button_Click" Content="Scan" Height="24"/>
                 <Button Click="Button_Click_1">Save</Button>
+                <Button Click="Button_Click_2">GC.Collect</Button>
             </StackPanel>
 
         </Grid>
+
+        <Slider Grid.Row="2" Minimum="1" Maximum="6" x:Name="sliderScale"></Slider>
         
-        <local:PhotoView x:Name="mainView" Grid.Row="1">
-            
+        <local:PhotoView x:Name="mainView" Grid.Row="1" ImageSizeFactor="{Binding ElementName=sliderScale, Path=Value}">
+
         </local:PhotoView>
         
+
     </Grid>
 </Window>

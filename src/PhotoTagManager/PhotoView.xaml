@@ -4,7 +4,7 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              mc:Ignorable="d" 
-             d:DesignHeight="300" d:DesignWidth="300">
+             d:DesignHeight="300" d:DesignWidth="300" x:Name="ParentUC">
     <Grid>
         <ListBox Grid.Row="0" Name="lvItems" ScrollViewer.HorizontalScrollBarVisibility="Disabled">
             <ListBox.ItemsPanel>
@@ -16,12 +16,12 @@
             <ListBox.ItemTemplate>
                 <DataTemplate DataType="local:ListItem">
                     <Border BorderThickness="0.5" BorderBrush="Gray">
-                        <Grid Width="100" Margin="4">
+                        <Grid Margin="4">
                             <Grid.RowDefinitions>
-                                <RowDefinition Height="100"/>
+                                <RowDefinition Height="Auto"/>
                                 <RowDefinition Height="Auto"/>
                             </Grid.RowDefinitions>
-                            <Image Source="{Binding Thumbnail}" Width="96" Height="100" Stretch="Uniform"
+                            <Image Source="{Binding Thumbnail}" Width="{Binding ElementName=ParentUC, Path=ScaleX}" Height="{Binding ElementName=ParentUC, Path=ScaleX}" Stretch="Uniform"
                                    ToolTip="{Binding FullName}"/>
                             <Label Grid.Row="1" Content="{Binding Name}" HorizontalAlignment="Center"/>
                         </Grid>

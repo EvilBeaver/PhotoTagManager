@@ -9,5 +9,14 @@ namespace PhotoTagManager
     interface IThumbnailProvider
     {
         ImageSource GetThumbnail(string imagePath);
+        ImageSource GetThumbnail(string imagePath, ThumbnailQuality quality);
     }
+
+    enum ThumbnailQuality
+    {
+        Normal,
+        High,
+        Full
+    }
+
 }

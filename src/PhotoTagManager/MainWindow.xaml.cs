@@ -46,5 +46,11 @@ namespace PhotoTagManager
             var fileData = scanner.ScanFolder(path, "*.jpg", true);
             mngr.UpdateStorage(fileData);
         }
+
+        private void Button_Click_2(object sender, RoutedEventArgs e)
+        {
+            GC.Collect();
+        }
+
     }
 }
