@@ -31,7 +31,7 @@ namespace PhotoTagManager
         public PhotoView()
         {
             InitializeComponent();
-            _thumbnailer = new BitmapImageThumbnailProvider();
+            _thumbnailer = new VistaThumbnailProvider();//new BitmapImageThumbnailProvider();
             
         }
 

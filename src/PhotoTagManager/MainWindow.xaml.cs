@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
@@ -33,23 +34,6 @@ namespace PhotoTagManager
 
             Task.Factory.StartNew(() => scanner.ScanFolder(path, "*.jpg", true))
                 .ContinueWith((x) => mainView.SetItemsSource(x.Result), TaskScheduler.FromCurrentSynchronizationContext());
-        }
-
-        private void Button_Click_1(object sender, RoutedEventArgs e)
-        {
-            var db = new Tagger.Engine.DAL.Database("tagsbase.db3");
-            Tagger.Engine.DAL.DatabaseService.RegisterInstance(db);
-            var mngr = new Tagger.Engine.StorageManager();
-
-            var scanner = new Tagger.Engine.FileScanner();
-            var path = txtPath.Text;
-            var fileData = scanner.ScanFolder(path, "*.jpg", true);
-            mngr.UpdateStorage(fileData);
-        }
-
-        private void Button_Click_2(object sender, RoutedEventArgs e)
-        {
-            GC.Collect();
         }
 
     }
