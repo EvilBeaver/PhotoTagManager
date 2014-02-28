@@ -21,6 +21,9 @@ by a tag "Museum" and send them to printing service or just to removable drive
 Of course, I want to have easy navigation and preview of images.
 
 Not-Invented-Here disclaimer:
+
 I know some already existing applications with similar capabilities.
 Those that free are awful. Those that are not - nice, but not free.
-I have to made application of my dream. I hope for help from open-source society.
+I have to made a photo-manager of my dream. I hope for help from open-source society.
+
+P.S. and yes, I have really bad English.
