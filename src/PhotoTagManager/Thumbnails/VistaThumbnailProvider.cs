@@ -81,10 +81,6 @@ namespace PhotoTagManager
                             return iSrc;
 
                         }
-                        catch (COMException exc)
-                        {
-                            throw;
-                        }
                         finally
                         {
                             bmpPtr = IntPtr.Zero;

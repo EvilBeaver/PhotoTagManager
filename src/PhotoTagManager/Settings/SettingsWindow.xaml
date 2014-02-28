@@ -1,0 +1,30 @@
+﻿<Window
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+        xmlns:local="clr-namespace:PhotoTagManager.Settings"
+        mc:Ignorable="d" x:Class="PhotoTagManager.Settings.SettingsWindow"
+        
+        Title="Settings" SizeToContent="WidthAndHeight" MinWidth="450" MinHeight="300">
+    <Grid Margin="5">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+        
+        <TabControl ItemsSource="{Binding Sections}" Name="SectionsViewer">
+            <TabControl.ItemContainerStyle>
+                <Style TargetType="TabItem">
+                    <Setter Property="Header" Value="{Binding Header}"/>
+                    <Setter Property="Content" Value="{Binding UI}"/>
+                </Style>
+            </TabControl.ItemContainerStyle>
+        </TabControl>
+        
+        <StackPanel Orientation="Horizontal" Grid.Row="1" HorizontalAlignment="Right" Margin="6">
+            <Button Name="btnOK" MinWidth="90" Margin="0,0,5,0" IsDefault="True" Click="btnOK_Click">OK</Button>
+            <Button Name="btnCancel" MinWidth="90" IsCancel="True">Cancel</Button>
+        </StackPanel>
+        
+    </Grid>
+</Window>
