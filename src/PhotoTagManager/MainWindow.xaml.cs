@@ -24,16 +24,9 @@ namespace PhotoTagManager
     {
         public MainWindow()
         {
+            DataContext = new ViewModel.MainUIViewModel();
+            
             InitializeComponent();
-        }
-
-        private void Button_Click(object sender, RoutedEventArgs e)
-        {
-            var scanner = new Tagger.Engine.FileScanner();
-            var path = txtPath.Text;
-
-            Task.Factory.StartNew(() => scanner.ScanFolder(path, "*.jpg", true))
-                .ContinueWith((x) => mainView.SetItemsSource(x.Result), TaskScheduler.FromCurrentSynchronizationContext());
         }
 
     }

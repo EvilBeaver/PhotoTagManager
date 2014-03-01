@@ -57,8 +57,14 @@ namespace PhotoTagManager.Settings
         {
             Properties.Settings.Default.DatabaseLocation = DatabaseLocation;
             Properties.Settings.Default.Save();
+
+            if (SettingsSaved != null)
+            {
+                SettingsSaved(this, new EventArgs());
+            }
         }
-        
+
+        public event EventHandler SettingsSaved;
 
         // static
         #region Static

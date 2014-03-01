@@ -177,7 +177,26 @@ namespace Tagger.Engine.DAL
 
         public IEnumerable<FileLink> GetByPathBase(string pathBase)
         {
-            return null;
+            List<FileLink> result = new List<FileLink>();
+            using (var con = Database.OpenConnection())
+            {
+                using (var cmd = con.CreateCommand())
+                {
+                    cmd.CommandText = @"SELECT [name],[fullname],[md5],[id] 
+                                        FROM [files]
+                                        WHERE [fullname] LIKE @DirBase";
+                    cmd.Parameters.AddWithValue("DirBase", pathBase + "%");
+                    using (var reader = cmd.ExecuteReader())
+                    {
+                        while (reader.Read())
+                        {
+                            result.Add(Hydrate(reader));
+                        }
+                    }
+                }
+            }
+
+            return result;
         }
     }
 

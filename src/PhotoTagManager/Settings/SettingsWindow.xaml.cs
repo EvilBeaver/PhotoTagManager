@@ -33,6 +33,14 @@ namespace PhotoTagManager.Settings
         private void btnOK_Click(object sender, RoutedEventArgs e)
         {
             _model.Save();
+            Close();
         }
+
+        private void btnCancel_Click(object sender, RoutedEventArgs e)
+        {
+            Close();
+        }
+
+        
     }
 }

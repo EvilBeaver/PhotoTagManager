@@ -23,7 +23,7 @@
         
         <StackPanel Orientation="Horizontal" Grid.Row="1" HorizontalAlignment="Right" Margin="6">
             <Button Name="btnOK" MinWidth="90" Margin="0,0,5,0" IsDefault="True" Click="btnOK_Click">OK</Button>
-            <Button Name="btnCancel" MinWidth="90" IsCancel="True">Cancel</Button>
+            <Button Name="btnCancel" MinWidth="90" IsCancel="True" Click="btnCancel_Click">Cancel</Button>
         </StackPanel>
         
     </Grid>

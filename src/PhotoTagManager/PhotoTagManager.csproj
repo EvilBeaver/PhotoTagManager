@@ -77,6 +77,7 @@
     <Compile Include="Lib\AvalonLibrary\NativeMethods.cs" />
     <Compile Include="Lib\AvalonLibrary\RootType.cs" />
     <Compile Include="Lib\MVVM\ViewModelBase.cs" />
+    <Compile Include="Lib\WinAPI\IconExtractor.cs" />
     <Compile Include="Settings\ApplicationSettings.cs" />
     <Compile Include="Settings\CommonSettingsUI.xaml.cs">
       <DependentUpon>CommonSettingsUI.xaml</DependentUpon>
@@ -87,6 +88,11 @@
     <Compile Include="Settings\SettingsWndViewModel.cs" />
     <Compile Include="Thumbnails\BitmapImageThumbnailProvider.cs" />
     <Compile Include="Thumbnails\VistaThumbnailProvider.cs" />
+    <Compile Include="ViewModel\FileSystemViewModel.cs" />
+    <Compile Include="ViewModel\IconicViewModel.cs" />
+    <Compile Include="ViewModel\ImageStreamViewModel.cs" />
+    <Compile Include="ViewModel\MainUIViewModel.cs" />
+    <Compile Include="ViewModel\TreeModelItem.cs" />
     <Page Include="MainWindow.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
