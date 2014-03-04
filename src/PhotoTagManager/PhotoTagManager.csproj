@@ -92,6 +92,7 @@
     <Compile Include="ViewModel\IconicViewModel.cs" />
     <Compile Include="ViewModel\ImageStreamViewModel.cs" />
     <Compile Include="ViewModel\MainUIViewModel.cs" />
+    <Compile Include="ViewModel\MyComputerHomeStream.cs" />
     <Compile Include="ViewModel\TreeModelItem.cs" />
     <Page Include="MainWindow.xaml">
       <Generator>MSBuild:Compile</Generator>

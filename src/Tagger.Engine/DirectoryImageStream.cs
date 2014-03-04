@@ -17,6 +17,10 @@ namespace Tagger.Engine
             _path = path;
             _pattern = pattern;
             Name = System.IO.Path.GetFileName(_path);
+            if (Name == "")
+            {
+                Name = _path;
+            }
         }
         
         #region IImageStream Members

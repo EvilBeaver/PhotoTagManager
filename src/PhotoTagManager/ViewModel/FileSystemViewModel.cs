@@ -12,28 +12,48 @@ namespace PhotoTagManager.ViewModel
         private DirectoryImageStream _model;
         private const string PATTERN = "*.jpg";
 
-        public static FileSystemViewModel Create(string root)
+        public static FileSystemViewModel Create(string root, ImageStreamViewModel parent)
         {
             var model = new DirectoryImageStream(root, PATTERN);
-            return new FileSystemViewModel(model, null);
+            return new FileSystemViewModel(model, parent);
         }
 
         private FileSystemViewModel(DirectoryImageStream model, ImageStreamViewModel parent)
             : base(model, parent)
         {
             _model = model;
+            if (parent == null)
+            {
+                IsRootStream = true;
+            }
+
             Header = _model.Name;
             Icon = IconExtractor.GetFolderIcon(_model.Path, IconExtractor.IconSize.Small, IconExtractor.FolderType.Closed);
         }
 
         protected override void FillChildren(ICollection<TreeModelItem<ImageStreamViewModel>> children)
         {
-            var dirs = System.IO.Directory.EnumerateDirectories(_model.Path);
-            foreach (var dir in dirs)
+            try
             {
-                var model = new DirectoryImageStream(dir, PATTERN);
-                var childViewModel = new FileSystemViewModel(model, this);
-                children.Add(childViewModel);
+                var di = new System.IO.DirectoryInfo(_model.Path);
+                var dirs = di.EnumerateDirectories()
+                    .Where(x => !x.Attributes.HasFlag(System.IO.FileAttributes.Hidden))
+                    .OrderBy(x=>x.Name)
+                    .Select(x=>x.FullName);
+
+                
+                foreach (var dir in dirs)
+                {
+                    var model = new DirectoryImageStream(dir, PATTERN);
+                    var childViewModel = new FileSystemViewModel(model, this);
+                    children.Add(childViewModel);
+
+                }
+
+                
+            }
+            catch
+            {
             }
         }
     }

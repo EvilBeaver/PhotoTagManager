@@ -27,6 +27,24 @@
 
             <TreeView Grid.Column="0" ItemsSource="{Binding Streams}">
                 
+                <TreeView.Resources>
+                    <Style TargetType="TreeViewItem" x:Key="StreamHeaderStyle">
+                        <Setter Property="Template">
+                            <Setter.Value>
+                                <ControlTemplate TargetType="TreeViewItem">
+                                    <Expander IsExpanded="{Binding IsExpanded, RelativeSource={RelativeSource TemplatedParent}}">
+                                        <Expander.Header>
+                                            <ContentPresenter x:Name="PART_Header" ContentTemplate="{TemplateBinding HeaderTemplate}" Content="{TemplateBinding Header}" ContentStringFormat="{TemplateBinding HeaderStringFormat}" ContentSource="Header"/>
+                                        </Expander.Header>
+                                        <ItemsPresenter/>
+                                    </Expander>
+                                </ControlTemplate>
+                            </Setter.Value>
+                        </Setter>
+                    </Style>
+                    <vm:TreeViewFirstItemStyleSelector x:Key="styleSelector"/>
+                </TreeView.Resources>
+                
                 <TreeView.ItemTemplate>
                     <HierarchicalDataTemplate ItemsSource="{Binding Children}" DataType="{x:Type vm:ImageStreamViewModel}">
                         <StackPanel Orientation="Horizontal" Margin="3">
@@ -35,6 +53,10 @@
                         </StackPanel>
                     </HierarchicalDataTemplate>
                 </TreeView.ItemTemplate>
+                
+                <TreeView.ItemContainerStyleSelector>
+                    <StaticResource ResourceKey="styleSelector"/>
+                </TreeView.ItemContainerStyleSelector>
                 
             </TreeView>
             

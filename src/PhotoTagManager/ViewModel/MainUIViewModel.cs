@@ -13,9 +13,7 @@ namespace PhotoTagManager.ViewModel
         
         public MainUIViewModel()
         {
-            var imagesPath = Environment.GetFolderPath(Environment.SpecialFolder.MyPictures);
-            var root = FileSystemViewModel.Create(imagesPath);
-            _streams.Add(root);
+            _streams.Add(new MyComputerHomeStream());
         }
 
         public ObservableCollection<ImageStreamViewModel> Streams
