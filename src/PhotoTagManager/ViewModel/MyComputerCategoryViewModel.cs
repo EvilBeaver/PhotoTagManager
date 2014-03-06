@@ -24,7 +24,7 @@ namespace PhotoTagManager.ViewModel
 
         protected override System.Windows.Media.ImageSource GetIcon()
         {
-            return null;
+            return Lib.WinAPI.IconExtractor.GetSpecialFolderIcon(Lib.WinAPI.IconExtractor.CSIDL.CSIDL_DRIVES);
         }
 
         protected override string GetHeader()
