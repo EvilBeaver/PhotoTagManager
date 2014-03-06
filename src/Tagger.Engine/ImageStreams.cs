@@ -10,4 +10,15 @@ namespace Tagger.Engine
         string Name { get; set; }
         IList<ImageInfo> Images { get; }
     }
+
+    public interface IImageStreamHost
+    {
+        IList<IHostableImageStream> ChildItems { get; }
+    }
+
+    public interface IHostableImageStream : IImageStream
+    {
+        IImageStreamHost Parent { get; }
+    }
+
 }

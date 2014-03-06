@@ -9,14 +9,14 @@ namespace PhotoTagManager.ViewModel
 {
     class MainUIViewModel : Lib.MVVM.ViewModelBase
     {
-        private ObservableCollection<ImageStreamViewModel> _streams = new ObservableCollection<ImageStreamViewModel>();
+        private ObservableCollection<ImageCategoryViewModel> _streams = new ObservableCollection<ImageCategoryViewModel>();
         
         public MainUIViewModel()
         {
-            _streams.Add(new MyComputerHomeStream());
+            _streams.Add(MyComputerCategoryViewModel.Create());
         }
 
-        public ObservableCollection<ImageStreamViewModel> Streams
+        public ObservableCollection<ImageCategoryViewModel> Categories
         {
             get { return _streams; }
         }

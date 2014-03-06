@@ -25,10 +25,25 @@
                 <ColumnDefinition Width="517*"/>
             </Grid.ColumnDefinitions>
 
-            <TreeView Grid.Column="0" ItemsSource="{Binding Streams}">
+            <TreeView Grid.Column="0" ItemsSource="{Binding Categories}">
                 
                 <TreeView.Resources>
-                    <Style TargetType="TreeViewItem" x:Key="StreamHeaderStyle">
+
+                    <HierarchicalDataTemplate ItemsSource="{Binding ChildItems}" DataType="{x:Type vm:ImageCategoryViewModel}">
+                        <StackPanel Orientation="Horizontal" Margin="3">
+                            <Image Source="{Binding Icon}"/>
+                            <TextBlock Text="{Binding Header}" Margin="3,0,0,0"/>
+                        </StackPanel>
+                    </HierarchicalDataTemplate>
+
+                    <HierarchicalDataTemplate ItemsSource="{Binding ChildItems}" DataType="{x:Type vm:ImageStreamViewModel}">
+                        <StackPanel Orientation="Horizontal" Margin="3">
+                            <Image Source="{Binding Icon}"/>
+                            <TextBlock Text="{Binding Header}" Margin="3,0,0,0"/>
+                        </StackPanel>
+                    </HierarchicalDataTemplate>
+
+                    <!--Style TargetType="TreeViewItem" x:Key="StreamHeaderStyle">
                         <Setter Property="Template">
                             <Setter.Value>
                                 <ControlTemplate TargetType="TreeViewItem">
@@ -41,22 +56,13 @@
                                 </ControlTemplate>
                             </Setter.Value>
                         </Setter>
-                    </Style>
-                    <vm:TreeViewFirstItemStyleSelector x:Key="styleSelector"/>
+                    </Style-->
+                    <!--vm:TreeViewFirstItemStyleSelector x:Key="styleSelector"/-->
                 </TreeView.Resources>
                 
-                <TreeView.ItemTemplate>
-                    <HierarchicalDataTemplate ItemsSource="{Binding Children}" DataType="{x:Type vm:ImageStreamViewModel}">
-                        <StackPanel Orientation="Horizontal" Margin="3">
-                            <Image Source="{Binding Icon}"/>
-                            <TextBlock Text="{Binding Header}" Margin="3,0,0,0"/>
-                        </StackPanel>
-                    </HierarchicalDataTemplate>
-                </TreeView.ItemTemplate>
-                
-                <TreeView.ItemContainerStyleSelector>
+                <!--TreeView.ItemContainerStyleSelector>
                     <StaticResource ResourceKey="styleSelector"/>
-                </TreeView.ItemContainerStyleSelector>
+                </TreeView.ItemContainerStyleSelector-->
                 
             </TreeView>
             

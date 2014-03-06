@@ -6,7 +6,7 @@ using System.Windows.Media;
 
 namespace PhotoTagManager.ViewModel
 {
-    class IconicViewModel : Lib.MVVM.ViewModelBase
+    abstract class IconicViewModel : Lib.MVVM.ViewModelBase
     {
         private ImageSource _icon;
         private string _header;
@@ -15,6 +15,10 @@ namespace PhotoTagManager.ViewModel
         {
             get
             {
+                if (_icon == null)
+                {
+                    _icon = GetIcon();
+                }
                 return _icon;
             }
             set
@@ -28,6 +32,10 @@ namespace PhotoTagManager.ViewModel
         {
             get
             {
+                if (_header == null)
+                {
+                    _header = GetHeader();
+                }
                 return _header;
             }
             set
@@ -36,6 +44,9 @@ namespace PhotoTagManager.ViewModel
                 OnPropertyChanged("Header");
             }
         }
+
+        abstract protected ImageSource GetIcon();
+        abstract protected string GetHeader();
 
     }
 }

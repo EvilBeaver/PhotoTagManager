@@ -88,12 +88,12 @@
     <Compile Include="Settings\SettingsWndViewModel.cs" />
     <Compile Include="Thumbnails\BitmapImageThumbnailProvider.cs" />
     <Compile Include="Thumbnails\VistaThumbnailProvider.cs" />
-    <Compile Include="ViewModel\FileSystemViewModel.cs" />
+    <Compile Include="ViewModel\DirectoryImageStreamViewModel.cs" />
     <Compile Include="ViewModel\IconicViewModel.cs" />
+    <Compile Include="ViewModel\ImageCategoryViewModel.cs" />
     <Compile Include="ViewModel\ImageStreamViewModel.cs" />
     <Compile Include="ViewModel\MainUIViewModel.cs" />
-    <Compile Include="ViewModel\MyComputerHomeStream.cs" />
-    <Compile Include="ViewModel\TreeModelItem.cs" />
+    <Compile Include="ViewModel\MyComputerCategoryViewModel.cs" />
     <Page Include="MainWindow.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
