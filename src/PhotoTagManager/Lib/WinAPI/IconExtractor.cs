@@ -53,7 +53,7 @@ namespace PhotoTagManager.Lib.WinAPI
         private const uint SHGFI_PIDL = 0x000000008;
         private const uint FILE_ATTRIBUTE_DIRECTORY = 0x00000010;
 
-        public enum CSIDL
+        private enum CSIDL
         {
             CSIDL_DESKTOP = 0x0000,    // <desktop>
             CSIDL_INTERNET = 0x0001,    // Internet Explorer (icon on desktop)
@@ -124,18 +124,8 @@ namespace PhotoTagManager.Lib.WinAPI
             // Need to add size check, although errors generated at present!    
             uint flags = SHGFI_ICON | SHGFI_USEFILEATTRIBUTES;
 
-            if (FolderType.Open == folderType)
-            {
-                flags += SHGFI_OPENICON;
-            }
-            if (IconSize.Small == size)
-            {
-                flags += SHGFI_SMALLICON;
-            }
-            else
-            {
-                flags += SHGFI_LARGEICON;
-            }
+            AddPictureOptions(size, folderType, ref flags);
+
             // Get the folder icon    
             var shfi = new SHFILEINFO();
 
@@ -161,14 +151,34 @@ namespace PhotoTagManager.Lib.WinAPI
             return icon;
         }
 
-        public static ImageSource GetSpecialFolderIcon(CSIDL csidl)
+        private static void AddPictureOptions(IconSize size, FolderType folderType, ref uint flags)
         {
+            if (FolderType.Open == folderType)
+            {
+                flags += SHGFI_OPENICON;
+            }
+            if (IconSize.Small == size)
+            {
+                flags += SHGFI_SMALLICON;
+            }
+            else
+            {
+                flags += SHGFI_LARGEICON;
+            }
+        }
+
+        public static ImageSource GetSpecialFolderIcon(Environment.SpecialFolder folder, IconSize size, FolderType folderType)
+        {
+            uint flags = SHGFI_ICON | SHGFI_PIDL;
+            AddPictureOptions(size, folderType, ref flags);
+
             var shfi = new SHFILEINFO();
+            var csidl = SpecialFolderToCIDL(folder);
 
             IntPtr ptrDir = IntPtr.Zero;
             SHGetSpecialFolderLocation(IntPtr.Zero, csidl, ref ptrDir);
 
-            var res = SHGetFileInfo(ptrDir, 0, out shfi, (uint)Marshal.SizeOf(shfi), SHGFI_ICON | SHGFI_SMALLICON | SHGFI_PIDL);
+            var res = SHGetFileInfo(ptrDir, 0, out shfi, (uint)Marshal.SizeOf(shfi), flags);
 
             Marshal.FreeCoTaskMem(ptrDir);
 
@@ -181,6 +191,27 @@ namespace PhotoTagManager.Lib.WinAPI
 
             return icon;
 
+        }
+
+        private static CSIDL SpecialFolderToCIDL(Environment.SpecialFolder folder)
+        {
+            CSIDL retValue;
+            switch (folder)
+            {
+                case Environment.SpecialFolder.MyComputer:
+                    retValue = CSIDL.CSIDL_DRIVES;
+                    break;
+                case Environment.SpecialFolder.MyDocuments:
+                    retValue = CSIDL.CSIDL_MYDOCUMENTS;
+                    break;
+                case Environment.SpecialFolder.MyPictures:
+                    retValue = CSIDL.CSIDL_MYPICTURES;
+                    break;
+                default:
+                    throw new ArgumentException("Special folder is not supported");
+            }
+
+            return retValue;
         }
 
     }
