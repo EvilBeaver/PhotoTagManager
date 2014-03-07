@@ -13,21 +13,54 @@
                 </ItemsPanelTemplate>
             </ListBox.ItemsPanel>
 
+            <ListBox.ItemContainerStyle>
+                <Style TargetType="ListBoxItem">
+                    <Setter Property="Background" Value="Transparent" />
+                    <Setter Property="Template">
+                        <Setter.Value>
+                            <ControlTemplate TargetType="{x:Type ListBoxItem}" >
+                                <Border SnapsToDevicePixels="True" 
+                                        HorizontalAlignment="Stretch" 
+                                        VerticalAlignment="Stretch" 
+                                        Background="{TemplateBinding Background}"
+                                        Name="adorner"
+                                        BorderBrush="Transparent"
+                                        BorderThickness="1"
+                                        Margin="2">
+                                    <ContentPresenter />
+                                </Border>
+                                <ControlTemplate.Triggers>
+                                    <Trigger Property="IsSelected" Value="True">
+                                        <Setter Property="Background" Value="#445B6249"/>
+                                    </Trigger>
+                                    <Trigger Property="IsMouseOver" Value="True">
+                                        <Setter TargetName="adorner" Property="BorderBrush" Value="#445B6249"/>
+                                        <Setter TargetName="adorner" Property="BorderThickness" Value="1"/>
+                                    </Trigger>
+                                </ControlTemplate.Triggers>
+                            </ControlTemplate>
+                        </Setter.Value>
+                    </Setter>
+                </Style>
+            </ListBox.ItemContainerStyle>
+            
             <ListBox.ItemTemplate>
                 <DataTemplate DataType="local:ListItem">
-                    <Border BorderThickness="0.5" BorderBrush="Gray" Margin="10">
+                    
+                    <Border BorderThickness="0.5" BorderBrush="Gray" Background="White" Margin="7">
                         <Grid Margin="4">
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="Auto"/>
                                 <RowDefinition Height="Auto"/>
                             </Grid.RowDefinitions>
                             <Image Source="{Binding Thumbnail}" Width="{Binding ElementName=ParentUC, Path=ScaleX}" Height="{Binding ElementName=ParentUC, Path=ScaleX}" Stretch="Uniform"
-                                   ToolTip="{Binding FullName}" Name="imgThumbnail"/>
+                                ToolTip="{Binding FullName}" Name="imgThumbnail" SnapsToDevicePixels="True"/>
                             <TextBlock Grid.Row="1" Text="{Binding Name}" HorizontalAlignment="Center" 
-                                       MaxWidth="80"
-                                       TextTrimming="CharacterEllipsis"/>
+                                    MaxWidth="80"
+                                    TextTrimming="CharacterEllipsis"/>
                         </Grid>
                     </Border>
+                    
                 </DataTemplate>
             </ListBox.ItemTemplate>
         </ListBox>
