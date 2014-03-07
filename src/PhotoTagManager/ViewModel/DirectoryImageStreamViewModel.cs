@@ -10,11 +10,15 @@ namespace PhotoTagManager.ViewModel
     class DirectoryImageStreamViewModel : ImageStreamViewModel
     {
         private DirectoryImageStream _model;
-        private ObservableCollection<ImageStreamViewModel> _childDirectories;
+        private ObservableCollection<ImageStreamViewModel> _childDirectories = new ObservableCollection<ImageStreamViewModel>();
+        private bool _hasDummyChild;
+        private bool _isExpanded;
 
         public DirectoryImageStreamViewModel(DirectoryImageStream model) : base(model)
         {
             _model = model;
+            _childDirectories.Add(new DummyImageStreamViewModel());
+            _hasDummyChild = true;
         }
 
         protected override System.Windows.Media.ImageSource GetIcon()
@@ -35,14 +39,43 @@ namespace PhotoTagManager.ViewModel
         {
             get
             {
-                if (_childDirectories == null)
-                {
-                    _childDirectories = new ObservableCollection<ImageStreamViewModel>(
-                        _model.ChildItems.Select(x => new DirectoryImageStreamViewModel((DirectoryImageStream)x)));
-                }
-
                 return _childDirectories;
             }
         }
+
+        private void FetchRealData()
+        {
+            if (_hasDummyChild && _isExpanded)
+            {
+                _childDirectories.Clear();
+                var dirs = new ObservableCollection<ImageStreamViewModel>(
+                    _model.ChildItems.Select(x => new DirectoryImageStreamViewModel((DirectoryImageStream)x)));
+
+                foreach (var dir in dirs)
+                {
+                    _childDirectories.Add(dir);
+                }
+
+                _hasDummyChild = false;
+            }
+        }
+
+        public bool IsExpanded 
+        {
+            get
+            {
+                return _isExpanded;
+            }
+            set
+            {
+                _isExpanded = value;
+                if (_isExpanded && _hasDummyChild)
+                {
+                    FetchRealData();
+                }
+                OnPropertyChanged("IsExpanded");
+            }
+        }
+
     }
 }

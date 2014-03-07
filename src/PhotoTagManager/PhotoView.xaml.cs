@@ -96,7 +96,30 @@ namespace PhotoTagManager
 
         #endregion
 
-        public void SetItemsSource(IEnumerable<FileLink> source)
+        public IList<ImageInfo> ImagesSource
+        {
+            get { return (IList<ImageInfo>)GetValue(ImagesSourceProperty); }
+            set { SetValue(ImagesSourceProperty, value); }
+        }
+
+        // Using a DependencyProperty as the backing store for MyProperty.  This enables animation, styling, binding, etc...
+        public static readonly DependencyProperty ImagesSourceProperty =
+            DependencyProperty.Register("ImagesSource", typeof(IList<ImageInfo>), typeof(PhotoView), 
+            new PropertyMetadata((dObj, evArgs)=>
+                {
+                    var control = dObj as PhotoView;
+                    if (control != null)
+                    {
+                        var source = evArgs.NewValue as IList<ImageInfo>;
+                        if (source != null)
+                        {
+                            control.SetItemsSource(source.Select(x => x.File));
+                        }
+                    }
+                })
+            );
+
+        private void SetItemsSource(IEnumerable<FileLink> source)
         {
             var items = source.Select((x) => new ImageListItem(x)).ToList();
             lvItems.ItemsSource = items;
@@ -120,6 +143,11 @@ namespace PhotoTagManager
 
             Task.Factory.StartNew(() =>
             {
+                if (_imageItems.Count == 0)
+                {
+                    return;
+                }
+
                 Parallel.ForEach(Partitioner.Create(0, _imageItems.Count), (range, loopState) =>
                 {
                     bool isCancelled = false;

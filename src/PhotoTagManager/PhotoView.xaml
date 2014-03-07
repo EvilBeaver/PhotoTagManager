@@ -15,15 +15,17 @@
 
             <ListBox.ItemTemplate>
                 <DataTemplate DataType="local:ListItem">
-                    <Border BorderThickness="0.5" BorderBrush="Gray">
+                    <Border BorderThickness="0.5" BorderBrush="Gray" Margin="10">
                         <Grid Margin="4">
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="Auto"/>
                                 <RowDefinition Height="Auto"/>
                             </Grid.RowDefinitions>
                             <Image Source="{Binding Thumbnail}" Width="{Binding ElementName=ParentUC, Path=ScaleX}" Height="{Binding ElementName=ParentUC, Path=ScaleX}" Stretch="Uniform"
-                                   ToolTip="{Binding FullName}"/>
-                            <Label Grid.Row="1" Content="{Binding Name}" HorizontalAlignment="Center"/>
+                                   ToolTip="{Binding FullName}" Name="imgThumbnail"/>
+                            <TextBlock Grid.Row="1" Text="{Binding Name}" HorizontalAlignment="Center" 
+                                       MaxWidth="80"
+                                       TextTrimming="CharacterEllipsis"/>
                         </Grid>
                     </Border>
                 </DataTemplate>

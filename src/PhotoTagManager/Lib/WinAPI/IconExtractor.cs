@@ -207,6 +207,9 @@ namespace PhotoTagManager.Lib.WinAPI
                 case Environment.SpecialFolder.MyPictures:
                     retValue = CSIDL.CSIDL_MYPICTURES;
                     break;
+                case Environment.SpecialFolder.Favorites:
+                    retValue = CSIDL.CSIDL_FAVORITES;
+                    break;
                 default:
                     throw new ArgumentException("Special folder is not supported");
             }

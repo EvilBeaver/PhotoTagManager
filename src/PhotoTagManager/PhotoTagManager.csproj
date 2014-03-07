@@ -89,6 +89,7 @@
     <Compile Include="Thumbnails\BitmapImageThumbnailProvider.cs" />
     <Compile Include="Thumbnails\VistaThumbnailProvider.cs" />
     <Compile Include="ViewModel\DirectoryImageStreamViewModel.cs" />
+    <Compile Include="ViewModel\FavoritesCategoryViewModel.cs" />
     <Compile Include="ViewModel\IconicViewModel.cs" />
     <Compile Include="ViewModel\ImageCategoryViewModel.cs" />
     <Compile Include="ViewModel\ImageStreamViewModel.cs" />

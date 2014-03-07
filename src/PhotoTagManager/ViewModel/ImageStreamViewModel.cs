@@ -11,6 +11,7 @@ namespace PhotoTagManager.ViewModel
     {
         IImageStream _model;
         ObservableCollection<ImageInfo> _images;
+        //private bool _isSelected;
 
         public ImageStreamViewModel(IImageStream model)
         {
@@ -52,5 +53,37 @@ namespace PhotoTagManager.ViewModel
             }
         }
 
+        //public bool IsSelected 
+        //{
+        //    get
+        //    {
+        //        return _isSelected;
+        //    }
+        //    set
+        //    {
+        //        _isSelected = value;
+        //        OnPropertyChanged("IsSelected");
+        //    }
+        //}
+
+    }
+
+    class DummyImageStreamViewModel : ImageStreamViewModel
+    {
+
+        public DummyImageStreamViewModel() : base(null)
+        {
+
+        }
+
+        protected override System.Windows.Media.ImageSource GetIcon()
+        {
+            return null;
+        }
+
+        protected override string GetHeader()
+        {
+            return "loading...";
+        }
     }
 }

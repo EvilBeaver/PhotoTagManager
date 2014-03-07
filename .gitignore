@@ -1,0 +1,10 @@
+/src/*.suo
+/src/PhotoTagManager/obj
+/src/PhotoTagManager/bin
+/src/Tagger.Engine/obj
+/src/Tagger.Engine/bin
+/src/Tagger.Engine.Test/bin
+/src/Tagger.Engine.Test/obj
+
+/src/*.sdf
+/src/BeaverSoft.Common

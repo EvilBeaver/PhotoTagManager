@@ -25,7 +25,7 @@
                 <ColumnDefinition Width="517*"/>
             </Grid.ColumnDefinitions>
 
-            <TreeView Grid.Column="0" ItemsSource="{Binding Categories}">
+            <TreeView Grid.Column="0" ItemsSource="{Binding Categories}" Name="tvCategories">
                 
                 <TreeView.Resources>
 
@@ -60,13 +60,18 @@
                     <!--vm:TreeViewFirstItemStyleSelector x:Key="styleSelector"/-->
                 </TreeView.Resources>
                 
-                <!--TreeView.ItemContainerStyleSelector>
-                    <StaticResource ResourceKey="styleSelector"/>
-                </TreeView.ItemContainerStyleSelector-->
+                <TreeView.ItemContainerStyle>
+                    <Style TargetType="TreeViewItem">
+                        <Setter Property="IsExpanded" Value="{Binding IsExpanded, Mode=TwoWay}"/>
+                    </Style>
+                </TreeView.ItemContainerStyle>
                 
             </TreeView>
             
-            <GridSplitter Grid.Column="1"/>
+            <GridSplitter Grid.Column="1" VerticalAlignment="Stretch" HorizontalAlignment="Stretch"/>
+            
+            <local:PhotoView Grid.Column="2" ImagesSource="{Binding SelectedItem.Images, ElementName=tvCategories}"></local:PhotoView>
+            
         </Grid>
         
         
