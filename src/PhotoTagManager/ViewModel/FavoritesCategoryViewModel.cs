@@ -22,7 +22,7 @@ namespace PhotoTagManager.ViewModel
 
         protected override void RetrieveChildItems(ICollection<ImageStreamViewModel> destination)
         {
-            var picFolder = new DirectoryImageStream(Environment.GetFolderPath(Environment.SpecialFolder.MyPictures), "*.jpg");
+            var picFolder = new DirectoryImageStream(Environment.GetFolderPath(Environment.SpecialFolder.MyPictures), null);
             var picViewModel = new DirectoryImageStreamViewModel(picFolder);
             destination.Add(picViewModel);
         }

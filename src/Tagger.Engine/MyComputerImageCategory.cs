@@ -8,8 +8,6 @@ namespace Tagger.Engine
 {
     public class MyComputerImageCategory : IImageStreamHost
     {
-        private const string PATTERN = "*.jpg";
-
         private List<IHostableImageStream> _driveModels;
         
         #region IImageStreamHost Members
@@ -26,7 +24,7 @@ namespace Tagger.Engine
                     {
                         if (drive.IsReady)
                         {
-                            var dirModel = new DirectoryImageStream(drive.Name, PATTERN, this);
+                            var dirModel = new DirectoryImageStream(drive.Name, this);
                             var sb = new StringBuilder(drive.Name);
                             if(!String.IsNullOrWhiteSpace(drive.VolumeLabel))
                             {

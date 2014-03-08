@@ -12,19 +12,6 @@ namespace PhotoTagManager
 
         #region IThumbnailProvider Members
 
-        //[DllImport("Tagger.ShellInterop.dll")]
-        //public static extern IntPtr GetBitmap(string path);
-
-            // var prov = new TaggerShellInterop.ThumbnailProvider();
-
-            //var bmpPtr = prov.GetBitmap(imagePath);
-            
-            //var iSrc = System.Windows.Interop.Imaging.CreateBitmapSourceFromHBitmap(
-            //                   bmpPtr, IntPtr.Zero, Int32Rect.Empty,
-            //                   System.Windows.Media.Imaging.BitmapSizeOptions.FromEmptyOptions());
-
-            //return iSrc;
-
         public System.Windows.Media.ImageSource GetThumbnail(string imagePath)
         {
             return GetThumbnail(imagePath, ThumbnailQuality.Normal);
@@ -84,17 +71,23 @@ namespace PhotoTagManager
                         finally
                         {
                             bmpPtr = IntPtr.Zero;
+                            Marshal.ReleaseComObject(bmp);
+                            Marshal.ReleaseComObject(shItem);
                             bmp = null;
+                            shItem = null;
                         }
 
                     }
                     else
                     {
+                        Marshal.ReleaseComObject(bmp);
+                        Marshal.ReleaseComObject(shItem);
                         return null;
                     }
                 }
                 else
                 {
+                    Marshal.ReleaseComObject(shItem);
                     return null;
                 }
 

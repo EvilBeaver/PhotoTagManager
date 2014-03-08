@@ -9,17 +9,16 @@ namespace Tagger.Engine
     public class DirectoryImageStream : IHostableImageStream, IImageStreamHost
     {
         private string _path;
-        private string _pattern;
+        private const string PATTERN = "*.jpg";
         private IImageStreamHost _parent;
         private List<ImageInfo> _images;
         private List<IHostableImageStream> _childDirectories;
 
         private object _enumLock = new object();
 
-        public DirectoryImageStream(string path, string pattern, IImageStreamHost parent)
+        public DirectoryImageStream(string path, IImageStreamHost parent)
         {
             _path = path;
-            _pattern = pattern;
             _parent = parent;
             Name = System.IO.Path.GetFileName(_path);
             if (Name == "")
@@ -28,8 +27,6 @@ namespace Tagger.Engine
             }
         }
 
-        public DirectoryImageStream(string path, string pattern) : this(path, pattern, null) { }
-        
         #region IImageStream Members
 
         public string Name { get; set; }
@@ -48,7 +45,7 @@ namespace Tagger.Engine
                         {
                             _images = new List<ImageInfo>();
                             var scanner = new FileScanner();
-                            var fileInfos = scanner.ScanFolder(_path, _pattern);
+                            var fileInfos = scanner.ScanFolder(_path, PATTERN);
                             foreach (var item in fileInfos)
                             {
                                 _images.Add(new ImageInfo()
@@ -86,7 +83,7 @@ namespace Tagger.Engine
                     _childDirectories = Directory.EnumerateDirectories(this.Path)
                         .Where(x => TestDirIsHidden(x))
                         .OrderBy(x => x)
-                        .Select(x => (IHostableImageStream)new DirectoryImageStream(x, _pattern, this))
+                        .Select(x => (IHostableImageStream)new DirectoryImageStream(x, this))
                         .ToList();                        
                 }
 
