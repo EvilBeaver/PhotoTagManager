@@ -23,11 +23,23 @@ CREATE TABLE [tags](
 
 CREATE TABLE [imageProps](
 	[file_id] integer PRIMARY KEY NOT NULL,
-	[tags_string] varchar(200)
+	[tags_string] varchar(200),
+	[shot_date] integer
 );
+
+--tags map
 
 CREATE TABLE [tagsmap](
 	[file_id] integer NOT NULL,
 	[tag_id] integer NOT NULL,
 	PRIMARY KEY ([file_id],[tag_id])
+);
+
+-- properties misc
+
+CREATE TABLE imageAdditionalProps(
+	[file_id] integer NOT NULL,
+	[prop_key] integer NOT NULL,
+	[prop_value_text] varchar(150),
+	[prop_value_int] integer
 );
