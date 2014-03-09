@@ -29,5 +29,11 @@ namespace PhotoTagManager
             InitializeComponent();
         }
 
+        private void MenuItem_Click(object sender, RoutedEventArgs e)
+        {
+            var wnd = new Settings.SettingsWindow();
+            wnd.Show();
+        }
+
     }
 }

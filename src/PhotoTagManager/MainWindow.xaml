@@ -14,7 +14,9 @@
 
         <Menu Grid.Row="0">
             <MenuItem Header="File"/>
-            <MenuItem Header="Tools"/>
+            <MenuItem Header="Tools">
+                <MenuItem Header="Settings..." Click="MenuItem_Click"/>
+            </MenuItem>
         </Menu>
         
         <!--content-->
