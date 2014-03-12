@@ -88,13 +88,11 @@
     <Compile Include="Settings\SettingsWndViewModel.cs" />
     <Compile Include="Thumbnails\BitmapImageThumbnailProvider.cs" />
     <Compile Include="Thumbnails\VistaThumbnailProvider.cs" />
-    <Compile Include="ViewModel\DirectoryImageStreamViewModel.cs" />
-    <Compile Include="ViewModel\FavoritesCategoryViewModel.cs" />
+    <Compile Include="ViewModel\DirectoryStreamViewModel.cs" />
     <Compile Include="ViewModel\IconicViewModel.cs" />
-    <Compile Include="ViewModel\ImageCategoryViewModel.cs" />
-    <Compile Include="ViewModel\ImageStreamViewModel.cs" />
     <Compile Include="ViewModel\MainUIViewModel.cs" />
-    <Compile Include="ViewModel\MyComputerCategoryViewModel.cs" />
+    <Compile Include="ViewModel\MyComputerNavigationViewModel.cs" />
+    <Compile Include="ViewModel\NavigationItem.cs" />
     <Page Include="MainWindow.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>

@@ -9,31 +9,16 @@ namespace PhotoTagManager.ViewModel
 {
     class MainUIViewModel : Lib.MVVM.ViewModelBase
     {
-        private ImageStreamViewModel _currentImageStream;
-        private ObservableCollection<ImageCategoryViewModel> _streams = new ObservableCollection<ImageCategoryViewModel>();
-        
+        private ObservableCollection<NavigationItem> _streams = new ObservableCollection<NavigationItem>();
+
         public MainUIViewModel()
         {
-            _streams.Add(MyComputerCategoryViewModel.Create());
-            _streams.Add(FavoritesCategoryViewModel.Create());
+            _streams.Add(new MyComputerNavigationViewModel());
         }
 
-        public ObservableCollection<ImageCategoryViewModel> Categories
+        public ObservableCollection<NavigationItem> Categories
         {
             get { return _streams; }
-        }
-
-        public ImageStreamViewModel CurrentImageStream
-        {
-            get
-            {
-                return _currentImageStream;
-            }
-            set
-            {
-                _currentImageStream = value;
-                OnPropertyChanged("CurrentImageStream");
-            }
         }
     }
 }

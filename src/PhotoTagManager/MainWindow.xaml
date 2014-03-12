@@ -31,46 +31,35 @@
                 
                 <TreeView.Resources>
 
-                    <HierarchicalDataTemplate ItemsSource="{Binding ChildItems}" DataType="{x:Type vm:ImageCategoryViewModel}">
+                    <HierarchicalDataTemplate ItemsSource="{Binding ChildItems}" DataType="{x:Type vm:NavigationItem}">
                         <StackPanel Orientation="Horizontal" Margin="3">
-                            <Image Source="{Binding Icon}"/>
+                            <Image Source="{Binding Icon}" SnapsToDevicePixels="True"/>
                             <TextBlock Text="{Binding Header}" Margin="3,0,0,0"/>
                         </StackPanel>
                     </HierarchicalDataTemplate>
 
-                    <HierarchicalDataTemplate ItemsSource="{Binding ChildItems}" DataType="{x:Type vm:ImageStreamViewModel}">
-                        <StackPanel Orientation="Horizontal" Margin="3">
-                            <Image Source="{Binding Icon}"/>
-                            <TextBlock Text="{Binding Header}" Margin="3,0,0,0"/>
-                        </StackPanel>
-                    </HierarchicalDataTemplate>
-
-                    <Style TargetType="TreeViewItem" x:Key="StreamHeaderStyle">
-                        <Setter Property="Template">
-                            <Setter.Value>
-                                <ControlTemplate TargetType="TreeViewItem">
-                                    <Expander IsExpanded="{Binding IsExpanded, RelativeSource={RelativeSource TemplatedParent}}">
-                                        <Expander.Header>
-                                            <ContentPresenter x:Name="PART_Header" ContentTemplate="{TemplateBinding HeaderTemplate}" Content="{TemplateBinding Header}" ContentStringFormat="{TemplateBinding HeaderStringFormat}" ContentSource="Header"/>
-                                        </Expander.Header>
-                                        <ItemsPresenter Margin="16,0,0,0"/>
-                                    </Expander>
-                                </ControlTemplate>
-                            </Setter.Value>
-                        </Setter>
-                        <Setter Property="IsExpanded" Value="{Binding IsExpanded, Mode=TwoWay}"/>
-                    </Style>
+                    <ControlTemplate TargetType="TreeViewItem" x:Key="RootItemTemplate">
+                        <Expander IsExpanded="{Binding IsExpanded, RelativeSource={RelativeSource TemplatedParent}}">
+                            <Expander.Header>
+                                <ContentPresenter x:Name="PART_Header" ContentTemplate="{TemplateBinding HeaderTemplate}" Content="{TemplateBinding Header}" ContentStringFormat="{TemplateBinding HeaderStringFormat}" ContentSource="Header"/>
+                            </Expander.Header>
+                            <ItemsPresenter Margin="16,0,0,0"/>
+                        </Expander>
+                    </ControlTemplate>
 
                     <Style TargetType="TreeViewItem" x:Key="StandartStyle">
                         <Setter Property="IsExpanded" Value="{Binding IsExpanded, Mode=TwoWay}"/>
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding IsRootItem}" Value="True">
+                                <Setter Property="Template" Value="{StaticResource RootItemTemplate}"/>
+                            </DataTrigger>
+                        </Style.Triggers>
                     </Style>
-
-                    <vm:CategoryRootStyleSelector x:Key="styleSelector"/>
                 </TreeView.Resources>
                 
-                <TreeView.ItemContainerStyleSelector>
-                    <StaticResource ResourceKey="styleSelector"/>
-                </TreeView.ItemContainerStyleSelector>
+                <TreeView.ItemContainerStyle>
+                    <StaticResource ResourceKey="StandartStyle"/>
+                </TreeView.ItemContainerStyle>
                 
             </TreeView>
             

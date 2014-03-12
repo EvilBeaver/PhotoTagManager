@@ -8,10 +8,10 @@ namespace Tagger.Engine
 {
     public class ImageInfo
     {
-        private List<TagDescription> _tags = new List<TagDescription>();
+        private TagsCollection _tags = new TagsCollection();
         
         public FileLink File { get; internal set; }
-        public IList<TagDescription> Tags 
+        public TagsCollection Tags 
         {
             get { return _tags; }
         }
