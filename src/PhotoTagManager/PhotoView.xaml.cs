@@ -96,6 +96,8 @@ namespace PhotoTagManager
 
         #endregion
 
+        #region Image Sourcing
+
         public IList<ImageInfo> ImagesSource
         {
             get { return (IList<ImageInfo>)GetValue(ImagesSourceProperty); }
@@ -104,8 +106,8 @@ namespace PhotoTagManager
 
         // Using a DependencyProperty as the backing store for MyProperty.  This enables animation, styling, binding, etc...
         public static readonly DependencyProperty ImagesSourceProperty =
-            DependencyProperty.Register("ImagesSource", typeof(IList<ImageInfo>), typeof(PhotoView), 
-            new PropertyMetadata((dObj, evArgs)=>
+            DependencyProperty.Register("ImagesSource", typeof(IList<ImageInfo>), typeof(PhotoView),
+            new PropertyMetadata((dObj, evArgs) =>
                 {
                     var control = dObj as PhotoView;
                     if (control != null)
@@ -113,20 +115,24 @@ namespace PhotoTagManager
                         var source = evArgs.NewValue as IList<ImageInfo>;
                         if (source != null)
                         {
-                            control.SetItemsSource(source.Select(x => x.File));
+                            control.SetItemsSource(source);
                         }
                     }
                 })
             );
 
-        private void SetItemsSource(IEnumerable<FileLink> source)
+        private void SetItemsSource(IList<ImageInfo> source)
         {
-            var items = source.Select((x) => new ImageListItem(x)).ToList();
-            lvItems.ItemsSource = items;
-            _imageItems = items;
-
-            UpdateThumbnails(ThumbnailQuality.Normal);
-
+            var items = source.Select((x) => new ImageListItem(x));
+            Task.Factory.StartNew(() =>
+                {
+                    _imageItems = items.ToList();
+                })
+                .ContinueWith((task) =>
+                    {
+                        lvItems.ItemsSource = _imageItems;
+                        UpdateThumbnails(ThumbnailQuality.Normal);
+                    }, TaskScheduler.FromCurrentSynchronizationContext());
         }
 
         private void UpdateThumbnails(ThumbnailQuality quality)
@@ -176,10 +182,38 @@ namespace PhotoTagManager
                     _cancelThumbnailsUpdate = null;
                 }
 
-            }, 
+            },
             CancellationToken.None, TaskCreationOptions.LongRunning, TaskScheduler.Default);
 
         }
+
+        #endregion
+
+        public bool VerticalScroll
+        {
+            get { return (bool)GetValue(VerticalScrollProperty); }
+            set { SetValue(VerticalScrollProperty, value); }
+        }
+
+        // Using a DependencyProperty as the backing store for VerticalScroll.  This enables animation, styling, binding, etc...
+        public static readonly DependencyProperty VerticalScrollProperty =
+            DependencyProperty.Register("VerticalScroll", typeof(bool), typeof(PhotoView),
+            new PropertyMetadata(
+                (dObj, evArgs) =>
+                {
+                    var control = dObj as PhotoView;
+                    bool HasVerticalScroll = (bool)evArgs.NewValue;
+                    if (HasVerticalScroll)
+                    {
+                        ScrollViewer.SetHorizontalScrollBarVisibility(control.lvItems, ScrollBarVisibility.Disabled);
+                    }
+                    else
+                    {
+                        ScrollViewer.SetHorizontalScrollBarVisibility(control.lvItems, ScrollBarVisibility.Auto);
+                    }
+                    
+                }));
+
 
     }
 
@@ -188,9 +222,9 @@ namespace PhotoTagManager
         Tagger.Engine.FileLink _link;
         ImageSource _thumbnail;
 
-        public ImageListItem(FileLink link)
+        public ImageListItem(ImageInfo img)
         {
-            _link = link;
+            _link = img.File;
         }
 
         public string Name { get { return _link.Name; } }
