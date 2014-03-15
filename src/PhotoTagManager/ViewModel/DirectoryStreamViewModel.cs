@@ -12,6 +12,7 @@ namespace PhotoTagManager.ViewModel
         private DirectoryImageStream _model;
         private bool _hasDummyChild;
         private ObservableCollection<NavigationItem> _childNodes;
+        private ObservableCollection<ImageInfo> _images;
         
         private static DummyNavigationNode _staticDummyNode = new DummyNavigationNode();
 
@@ -53,6 +54,23 @@ namespace PhotoTagManager.ViewModel
                     _childNodes.Add(new DirectoryStreamViewModel((DirectoryImageStream)item));
                 }
                 _hasDummyChild = false;
+            }
+        }
+
+        public override ObservableCollection<ImageInfo> Images
+        {
+            get
+            {
+                if (_images == null)
+                {
+                    _images = new ObservableCollection<ImageInfo>();
+                    foreach (var item in _model.Images)
+                    {
+                        _images.Add(item);
+                    }
+                }
+
+                return _images;
             }
         }
     }
