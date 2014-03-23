@@ -36,8 +36,7 @@ namespace Tagger.Engine.DAL
                         throw new InvalidOperationException("Database is not specified");
                     }
 
-                    _fileRepo = new FileRepository();
-                    _fileRepo.Initialize();
+                    _fileRepo = FileRepository.Create();
                 }
 
                 return _fileRepo;

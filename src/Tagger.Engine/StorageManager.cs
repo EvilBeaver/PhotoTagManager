@@ -25,15 +25,13 @@ namespace Tagger.Engine
             var repo = DAL.DatabaseService.FileRepository;
             foreach (var item in joined.AsParallel())
             {
-                if (item.ID.IsEmpty())
-                {
-                    repo.Add(item.Link);
-                }
-                else
+                if (!item.ID.IsEmpty())
                 {
                     item.Link.AsPersistable().Key = item.ID;
-                    repo.Write(item.Link);
                 }
+                
+                repo.Write(item.Link);
+                
             }
 
         }

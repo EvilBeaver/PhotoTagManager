@@ -26,15 +26,7 @@ namespace Tagger.Engine.DAL
 
             SQLiteConnection.CreateFile(_dbFileName);
 
-            using (var con = OpenConnection())
-            {
-                using (SQLiteCommand createDataBase = con.CreateCommand())
-                {
-                    createDataBase.CommandText = Engine.Properties.Resources.DB_CREATION_SCRIPT;
-                    createDataBase.ExecuteNonQuery();
-                }
-            }
-            
+            FileRepository.Create();
         }
 
         private bool DatabaseFileExists()
@@ -61,6 +53,19 @@ namespace Tagger.Engine.DAL
             }
 
             return con;
+        }
+
+        public int Execute(string command, object[] parameters)
+        {
+            using (var con = OpenConnection())
+            {
+                using (var cmd = con.CreateCommand())
+                {
+                    cmd.CommandText = command;
+                    cmd.Parameters.AddRange(parameters);
+                    return cmd.ExecuteNonQuery();
+                }
+            }
         }
 
         public void Init()
