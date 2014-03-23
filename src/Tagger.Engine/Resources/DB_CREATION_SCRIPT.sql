@@ -43,3 +43,15 @@ CREATE TABLE imageAdditionalProps(
 	[prop_value_text] varchar(150),
 	[prop_value_int] integer
 );
+
+-- favorites
+
+CREATE TABLE favorites(
+	[table] varchar(100),
+	[table_id] integer NOT NULL
+);
+
+CREATE TABLE folder_refs(
+	[id] integer PRIMARY KEY NOT NULL,
+	[path] varchar(260)
+);
