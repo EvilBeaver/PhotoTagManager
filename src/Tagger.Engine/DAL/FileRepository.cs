@@ -7,9 +7,9 @@ using Tagger.Engine.DAL.Abstract;
 
 namespace Tagger.Engine.DAL
 {
-    class FileRepository : EntityRepository<FileLink>
+    public class FileRepository : EntityRepository<FileLink>
     {
-        private FileRepository(TableMapping mapping) : base(mapping)
+        private FileRepository(IDatabase db, TableMapping mapping) : base(db, mapping)
         {
 
         }
@@ -23,6 +23,16 @@ namespace Tagger.Engine.DAL
 
         public static FileRepository Create()
         {
+            return new FileRepository(DatabaseService.GetInstance(), GetFieldMap());
+        }
+
+        public static FileRepository Create(IDatabase db)
+        {
+            return new FileRepository(db, GetFieldMap());
+        }
+
+        private static TableMapping GetFieldMap()
+        {
             TableMapping map = new TableMapping();
             FieldMapping fieldDescr;
 
@@ -30,10 +40,11 @@ namespace Tagger.Engine.DAL
             map.AddFieldFor("Name", SimpleFieldType.String, 100);
             fieldDescr = map.AddFieldFor("FullName", SimpleFieldType.String, 260);
             fieldDescr.Indexed = FieldIndex.Unique;
+            
             fieldDescr = map.AddFieldFor("MD5", SimpleFieldType.String, 32);
             fieldDescr.Indexed = FieldIndex.NotUnique;
 
-            return new FileRepository(map);
+            return map;
         }
 
     }

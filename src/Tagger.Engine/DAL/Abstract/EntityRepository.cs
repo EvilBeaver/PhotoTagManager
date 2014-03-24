@@ -6,28 +6,32 @@ using System.Text;
 
 namespace Tagger.Engine.DAL.Abstract
 {
-    abstract class EntityRepository<T> : IDataRepository<T> where T : IPersistable
+    public abstract class EntityRepository<T> : IDataRepository<T> where T : IPersistable
     {
         private TableMapping _mapping;
+        private IDatabase _db;
         
-        public EntityRepository(TableMapping mapping)
+        internal EntityRepository(IDatabase db, TableMapping mapping)
         {
             _mapping = mapping;
+            _db = db;
             CreateTableIfNeeded();
         }
 
         private void CreateTableIfNeeded()
         {
-            using (var con = DatabaseService.GetInstance().OpenConnection())
+            using (var con = _db.OpenConnection())
             {
                 using (var cmd = con.CreateCommand())
                 {
                     cmd.CommandText = string.Format("SELECT name FROM sqlite_master WHERE type='table' AND name='{0}'",
                         _mapping.TableName);
-                    var reader = cmd.ExecuteReader(System.Data.CommandBehavior.SingleRow);
-                    if (!reader.HasRows)
+                    using (var reader = cmd.ExecuteReader(System.Data.CommandBehavior.SingleRow))
                     {
-                        CreateTable(con);
+                        if (!reader.HasRows)
+                        {
+                            CreateTable(con);
+                        }
                     }
                 }
             }
@@ -82,20 +86,14 @@ namespace Tagger.Engine.DAL.Abstract
         private StringBuilder BuildSelectStatement()
         {
             var sb = new StringBuilder();
-            sb.AppendLine("SELECT");
-            bool isFirst = true;
+            sb.Append("SELECT\n");
+            sb.AppendFormat("[{0}]", "id");
             foreach (var field in _mapping.FieldMapping)
             {
-                if (!isFirst)
-                {
-                    sb.Append(',');
-                }
-                
-                sb.AppendLine(field.DbField);
-                isFirst = false;
+                sb.AppendFormat(",\n[{0}]", field.DbField);
             }
 
-            sb.AppendFormat("FROM {0}", _mapping.TableName);
+            sb.AppendFormat("\nFROM [{0}]", _mapping.TableName);
 
             return sb;
         }
@@ -121,17 +119,28 @@ namespace Tagger.Engine.DAL.Abstract
         private string BuildInsertStatement()
         {
             var sb = new StringBuilder();
-            sb.AppendFormat("INSERT INTO {0}\n", _mapping.TableName);
-            sb.AppendLine("VALUES");
+            var valSb = new StringBuilder();
+            sb.AppendFormat("INSERT INTO [{0}]", _mapping.TableName);
+            valSb.Append("VALUES ");
             bool isFirst = true;
+            sb.Append(" (\n");
+            valSb.Append(" (\n");
             foreach (var field in _mapping.FieldMapping)
             {
                 if (!isFirst)
                 {
                     sb.Append(",\n");
+                    valSb.Append(",\n");
                 }
-                sb.AppendFormat("({0} = @{0})", field.DbField);
+                sb.AppendFormat("[{0}]",  field.DbField);
+                valSb.AppendFormat("@{0}", field.DbField);
+                isFirst = false;
             }
+
+            sb.Append(")\n");
+            valSb.Append(")");
+            sb.Append(valSb.ToString());
+            sb.Append(';');
 
             return sb.ToString();
         }
@@ -150,7 +159,7 @@ namespace Tagger.Engine.DAL.Abstract
                 return;
             }
 
-            sb.AppendLine("WHERE");
+            sb.AppendLine("\nWHERE");
 
             for (int i = 0; i < filterColumns.Length; i++)
             {
@@ -168,22 +177,22 @@ namespace Tagger.Engine.DAL.Abstract
             var type = data.GetType();
             foreach (var field in _mapping.FieldMapping)
             {
-                cmd.Parameters.AddWithValue(paramPrefix+field.DbField, type.GetProperty(field.ObjectProperty).GetValue(data, null));
+                cmd.Parameters.AddWithValue("@"+paramPrefix+field.DbField, type.GetProperty(field.ObjectProperty).GetValue(data, null));
             }
         }
 
         abstract protected T NewInstance();
         
-        private void Hydrate(T instance, SQLiteDataReader reader)
+        private void Hydrate(ref T instance, SQLiteDataReader reader)
         {
-            OnHydrate(instance, reader);
+            OnHydrate(ref instance, reader);
         }
 
-        protected virtual void OnHydrate(T instance, SQLiteDataReader reader)
+        protected virtual void OnHydrate(ref T instance, SQLiteDataReader reader)
         {
             var id = new Identifier()
             {
-                Value = (int)reader["id"]
+                Value = (int)(long)reader["id"]
             };
 
             instance.Key = id;
@@ -204,12 +213,12 @@ namespace Tagger.Engine.DAL.Abstract
             {
                 var delStatement = BuildDeleteStatement();
                 AppendFilter(delStatement, new string[] { "id" });
-                using (var con = DatabaseService.GetInstance().OpenConnection())
+                using (var con = _db.OpenConnection())
                 {
                     using (var cmd = con.CreateCommand())
                     {
                         cmd.CommandText = delStatement.ToString();
-                        cmd.Parameters.AddWithValue("filterid", item.Key.Value);
+                        cmd.Parameters.AddWithValue("@filterid", item.Key.Value);
                         cmd.ExecuteNonQuery();
                     }
                 }
@@ -221,7 +230,7 @@ namespace Tagger.Engine.DAL.Abstract
             if (item.Key.IsEmpty())
             {
                 var insert = BuildInsertStatement();
-                using (var con = DatabaseService.GetInstance().OpenConnection())
+                using (var con = _db.OpenConnection())
                 {
                     using (var cmd = con.CreateCommand())
                     {
@@ -230,7 +239,7 @@ namespace Tagger.Engine.DAL.Abstract
                         cmd.ExecuteNonQuery();
                         cmd.CommandText = String.Format("SELECT last_insert_rowid() FROM [{0}]", _mapping.TableName);
                         cmd.Parameters.Clear();
-                        var rowId = (int)cmd.ExecuteScalar();
+                        var rowId = (int)(long)cmd.ExecuteScalar();
                         item.Key = new Identifier() { Value = rowId };
                     }
                 }
@@ -239,13 +248,13 @@ namespace Tagger.Engine.DAL.Abstract
             {
                 var update = BuildUpdateStatement();
                 AppendFilter(update, new string[] { "id" });
-                using (var con = DatabaseService.GetInstance().OpenConnection())
+                using (var con = _db.OpenConnection())
                 {
                     using (var cmd = con.CreateCommand())
                     {
                         cmd.CommandText = update.ToString();
                         SetNamedParameters(cmd, item);
-                        cmd.Parameters.AddWithValue("filterid", item.Key.Value);
+                        cmd.Parameters.AddWithValue("@filterid", item.Key.Value);
                         cmd.ExecuteNonQuery();
                     }
                 }
@@ -258,21 +267,25 @@ namespace Tagger.Engine.DAL.Abstract
             {
                 var select = BuildSelectStatement();
                 AppendFilter(select, new string[] { "id" });
-                using (var con = DatabaseService.GetInstance().OpenConnection())
+                using (var con = _db.OpenConnection())
                 {
                     using (var cmd = con.CreateCommand())
                     {
-                        cmd.Parameters.AddWithValue("filterid", key.Value);
-                        var reader = cmd.ExecuteReader(System.Data.CommandBehavior.SingleRow);
-                        if (reader.HasRows)
+                        cmd.CommandText = select.ToString();
+                        cmd.Parameters.AddWithValue("@filterid", key.Value);
+                        using (var reader = cmd.ExecuteReader(System.Data.CommandBehavior.SingleRow))
                         {
-                            var item = NewInstance();
-                            Hydrate(item, reader);
-                            return item;
-                        }
-                        else
-                        {
-                            return default(T);
+                            if (reader.HasRows)
+                            {
+                                reader.Read();
+                                var item = NewInstance();
+                                Hydrate(ref item, reader);
+                                return item;
+                            }
+                            else
+                            {
+                                return default(T);
+                            }
                         }
                     }
                 }
@@ -287,14 +300,17 @@ namespace Tagger.Engine.DAL.Abstract
         {
             var select = BuildSelectStatement();
             var list = new List<T>();
-            using (var con = DatabaseService.GetInstance().OpenConnection())
+            using (var con = _db.OpenConnection())
             {
                 using (var cmd = con.CreateCommand())
                 {
                     var reader = cmd.ExecuteReader();
-                    var item = NewInstance();
-                    Hydrate(item, reader);
-                    list.Add(item);
+                    while (reader.Read())
+                    {
+                        var item = NewInstance();
+                        Hydrate(ref item, reader);
+                        list.Add(item);
+                    }
                 }
             }
 

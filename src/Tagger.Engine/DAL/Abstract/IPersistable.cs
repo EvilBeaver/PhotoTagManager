@@ -6,7 +6,7 @@ using System.Text;
 
 namespace Tagger.Engine.DAL
 {
-    interface IPersistable
+    public interface IPersistable
     {
         Identifier Key { get; set; }
     }

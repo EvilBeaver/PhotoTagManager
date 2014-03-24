@@ -5,5 +5,6 @@ namespace Tagger.Engine.DAL
     {
         void Init();
         System.Data.SQLite.SQLiteConnection OpenConnection();
+        void Shutdown();
     }
 }

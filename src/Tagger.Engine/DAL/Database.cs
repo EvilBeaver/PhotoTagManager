@@ -26,7 +26,8 @@ namespace Tagger.Engine.DAL
 
             SQLiteConnection.CreateFile(_dbFileName);
 
-            FileRepository.Create();
+            FileRepository.Create(this);
+            FavoritesRepository.Create(this);
         }
 
         private bool DatabaseFileExists()
@@ -51,8 +52,16 @@ namespace Tagger.Engine.DAL
                 con.Dispose();
                 throw;
             }
-
+            
             return con;
+        }
+
+        public void Shutdown()
+        {
+            var con = OpenConnection();
+            con.Shutdown();
+            con.Close();
+            con = null;
         }
 
         public int Execute(string command, object[] parameters)

@@ -25,7 +25,17 @@ namespace Tagger.Engine.DAL
             return _serviceInstance;
         }
 
-        internal static FileRepository FileRepository
+        public static void ShutdownInstance()
+        {
+            if (_serviceInstance != null)
+            {
+                _serviceInstance.Shutdown();
+                _fileRepo = null;
+                _serviceInstance = null;
+            }
+        }
+
+        public static FileRepository FileRepository
         {
             get
             {

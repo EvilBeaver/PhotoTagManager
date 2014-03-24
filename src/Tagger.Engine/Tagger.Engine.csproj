@@ -67,6 +67,7 @@
     <Compile Include="DAL\Abstract\IDataRepository.cs" />
     <Compile Include="DAL\Abstract\Identifier.cs" />
     <Compile Include="DAL\Abstract\IPersistable.cs" />
+    <Compile Include="DAL\Abstract\RegistryRepository.cs" />
     <Compile Include="DAL\Abstract\TableMapping.cs" />
     <Compile Include="DAL\Database.cs" />
     <Compile Include="DAL\DatabaseService.cs" />

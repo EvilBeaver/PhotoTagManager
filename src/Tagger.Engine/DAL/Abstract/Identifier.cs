@@ -5,7 +5,7 @@ using System.Text;
 
 namespace Tagger.Engine.DAL
 {
-    struct Identifier
+    public struct Identifier
     {
         internal int? Value { get; set; }
         public bool IsEmpty()

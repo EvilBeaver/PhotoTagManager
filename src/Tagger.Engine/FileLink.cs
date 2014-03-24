@@ -8,7 +8,8 @@ namespace Tagger.Engine
 {
     public class FileLink : IPersistable
     {
-        private Lazy<string> _md5;
+        private string _md5;
+        private object _lock = new object();
         private Identifier _databaseId;
 
         private FileLink()
@@ -19,29 +20,28 @@ namespace Tagger.Engine
         {
             FullName = path;
             Name = System.IO.Path.GetFileName(path);
+        }
 
-            _md5 = new Lazy<string>(() =>
+        private string CalculateHash()
+        {
+            if (System.IO.File.Exists(FullName))
             {
-                if (System.IO.File.Exists(FullName))
+                using (var stream = new System.IO.FileStream(FullName, System.IO.FileMode.Open, System.IO.FileAccess.Read))
+                using (var hasher = System.Security.Cryptography.MD5.Create())
                 {
-                    using (var stream = new System.IO.FileStream(FullName, System.IO.FileMode.Open, System.IO.FileAccess.Read))
-                    using (var hasher = System.Security.Cryptography.MD5.Create())
+                    var hashArr = hasher.ComputeHash(stream);
+                    var sb = new StringBuilder();
+                    for (int i = 0; i < hashArr.Length; i++)
                     {
-                        var hashArr = hasher.ComputeHash(stream);
-                        var sb = new StringBuilder();
-                        for (int i = 0; i < hashArr.Length; i++)
-                        {
-                            sb.AppendFormat("{0:x}", hashArr[i]);
-                        }
-                        return sb.ToString();
+                        sb.AppendFormat("{0:x}", hashArr[i]);
                     }
+                    return sb.ToString();
                 }
-                else
-                {
-                    return null;
-                }
-            });
-
+            }
+            else
+            {
+                return "";
+            }
         }
 
         public string FullName { get; internal set; }
@@ -50,12 +50,33 @@ namespace Tagger.Engine
         {
             get
             {
-                return _md5.Value;
+                if (_md5 == null)
+                {
+                    lock (_lock)
+                    {
+                        if (_md5 == null)
+                        {
+                            _md5 = CalculateHash();
+                        }
+                    }
+                }
+                
+                return _md5;
             }
             internal set
             {
-                string valCopy = value;
-                _md5 = new Lazy<string>(()=>valCopy);
+                lock (_lock)
+                {
+                    _md5 = value;
+                }
+            }
+        }
+
+        public void RecalculateMD5()
+        {
+            lock (_lock)
+            {
+                _md5 = CalculateHash();
             }
         }
 
@@ -79,8 +100,8 @@ namespace Tagger.Engine
 
         Identifier IPersistable.Key
         {
-            get { throw new NotImplementedException(); }
-            set { }
+            get { return _databaseId; }
+            set { _databaseId = value; }
         }
 
         internal IPersistable AsPersistable()

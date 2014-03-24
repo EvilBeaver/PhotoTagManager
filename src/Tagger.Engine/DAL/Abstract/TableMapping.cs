@@ -56,6 +56,7 @@ namespace Tagger.Engine.DAL.Abstract
     {
         None,
         NotUnique,
-        Unique
+        Unique,
+        PrimaryKey
     }
 }
