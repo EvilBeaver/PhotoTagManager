@@ -17,7 +17,7 @@ namespace Tagger.Engine.DAL
             return new FavoritesStreamReference();
         }
 
-        protected override void OnHydrate(ref FavoritesStreamReference instance, System.Data.SQLite.SQLiteDataReader reader)
+        protected override void OnHydrate(ref FavoritesStreamReference instance, IQueryReader reader)
         {
             var id = new Identifier(reader["table_id"]);
             

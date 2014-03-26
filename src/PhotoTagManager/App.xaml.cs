@@ -77,7 +77,7 @@ namespace PhotoTagManager
         private void ConnectDatabase()
         {
             var path = System.IO.Path.Combine(ApplicationSettings.Default.DatabaseLocation, DatabaseFile());
-            var db = new Tagger.Engine.DAL.Database(path);
+            var db = new Tagger.Engine.DAL.SQLiteDatabase(path);
             Tagger.Engine.DAL.DatabaseService.RegisterInstance(db);
         }
 

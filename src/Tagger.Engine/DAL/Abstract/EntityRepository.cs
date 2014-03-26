@@ -20,50 +20,46 @@ namespace Tagger.Engine.DAL.Abstract
 
         private void CreateTableIfNeeded()
         {
-            using (var con = _db.OpenConnection())
-            {
-                using (var cmd = con.CreateCommand())
-                {
-                    cmd.CommandText = string.Format("SELECT name FROM sqlite_master WHERE type='table' AND name='{0}'",
+            var query = new Query();
+            query.Text = string.Format("SELECT name FROM sqlite_master WHERE type='table' AND name='{0}'",
                         _mapping.TableName);
-                    using (var reader = cmd.ExecuteReader(System.Data.CommandBehavior.SingleRow))
-                    {
-                        if (!reader.HasRows)
-                        {
-                            CreateTable(con);
-                        }
-                    }
+            using (var reader = _db.ExecuteReader(query))
+            {
+                if (!reader.HasRows)
+                {
+                    CreateTable();
                 }
             }
             
         }
 
-        private void CreateTable(SQLiteConnection con)
+        private void CreateTable()
         {
-            using (var cmd = con.CreateCommand())
-            {
-                var sb = new StringBuilder();
-                var indexSb = new StringBuilder();
+            var sb = new StringBuilder();
+            var indexSb = new StringBuilder();
 
-                sb.AppendFormat("CREATE TABLE {0} (\n", _mapping.TableName);
-                sb.Append("id integer PRIMARY KEY AUTOINCREMENT NOT NULL");
-                foreach (var field in _mapping.FieldMapping)
+            sb.AppendFormat("CREATE TABLE {0} (\n", _mapping.TableName);
+            sb.Append("id integer PRIMARY KEY AUTOINCREMENT NOT NULL");
+            foreach (var field in _mapping.FieldMapping)
+            {
+                sb.AppendFormat(",\n {0} {1} NOT NULL", field.DbField, TypeExpression(field));
+                if (field.Indexed != FieldIndex.None)
                 {
-                    sb.AppendFormat(",\n {0} {1} NOT NULL", field.DbField, TypeExpression(field));
-                    if (field.Indexed != FieldIndex.None)
-                    {
-                        indexSb.AppendFormat("CREATE {0} INDEX {1} ON {2} ({3});\n",
-                            field.Indexed == FieldIndex.Unique? "UNIQUE" : "",
-                            "idx_"+field.DbField,
-                            _mapping.TableName,
-                            field.DbField);
-                    }
+                    indexSb.AppendFormat("CREATE {0} INDEX {1} ON {2} ({3});\n",
+                        field.Indexed == FieldIndex.Unique? "UNIQUE" : "",
+                        "idx_"+field.DbField,
+                        _mapping.TableName,
+                        field.DbField);
                 }
-                sb.Append(");\n");
-                sb.AppendLine(indexSb.ToString());
-                cmd.CommandText = sb.ToString();
-                cmd.ExecuteNonQuery();
             }
+            sb.Append(");\n");
+            sb.AppendLine(indexSb.ToString());
+
+            var query = new Query();
+            query.Text = sb.ToString();
+            
+            _db.ExecuteCommand(query);
+
         }
 
         private string TypeExpression(FieldMapping field)
@@ -172,23 +168,23 @@ namespace Tagger.Engine.DAL.Abstract
             }
         }
 
-        private void SetNamedParameters(SQLiteCommand cmd, object data, string paramPrefix = "")
+        private void SetNamedParameters(Query query, object data, string paramPrefix = "")
         {
             var type = data.GetType();
             foreach (var field in _mapping.FieldMapping)
             {
-                cmd.Parameters.AddWithValue("@"+paramPrefix+field.DbField, type.GetProperty(field.ObjectProperty).GetValue(data, null));
+                query.Parameters.Add(paramPrefix + field.DbField, type.GetProperty(field.ObjectProperty).GetValue(data, null));
             }
         }
 
         abstract protected T NewInstance();
         
-        private void Hydrate(ref T instance, SQLiteDataReader reader)
+        private void Hydrate(ref T instance, IQueryReader reader)
         {
             OnHydrate(ref instance, reader);
         }
 
-        protected virtual void OnHydrate(ref T instance, SQLiteDataReader reader)
+        protected virtual void OnHydrate(ref T instance, IQueryReader reader)
         {
             var id = new Identifier(reader["id"]);
             
@@ -210,15 +206,12 @@ namespace Tagger.Engine.DAL.Abstract
             {
                 var delStatement = BuildDeleteStatement();
                 AppendFilter(delStatement, new string[] { "id" });
-                using (var con = _db.OpenConnection())
-                {
-                    using (var cmd = con.CreateCommand())
-                    {
-                        cmd.CommandText = delStatement.ToString();
-                        cmd.Parameters.AddWithValue("@filterid", item.Key.Value);
-                        cmd.ExecuteNonQuery();
-                    }
-                }
+
+                var cmd = new Query();
+                cmd.Text = delStatement.ToString();
+                cmd.Parameters.Add("filterid", item.Key.Value);
+                _db.ExecuteCommand(cmd);
+
             }
         }
 
@@ -227,34 +220,35 @@ namespace Tagger.Engine.DAL.Abstract
             if (item.Key.IsEmpty())
             {
                 var insert = BuildInsertStatement();
-                using (var con = _db.OpenConnection())
+
+                using (var ts = _db.BeginTransaction())
                 {
-                    using (var cmd = con.CreateCommand())
-                    {
-                        cmd.CommandText = insert;
-                        SetNamedParameters(cmd, item);
-                        cmd.ExecuteNonQuery();
-                        cmd.CommandText = String.Format("SELECT last_insert_rowid() FROM [{0}]", _mapping.TableName);
-                        cmd.Parameters.Clear();
-                        var rowId = cmd.ExecuteScalar();
-                        item.Key = new Identifier(rowId);
-                    }
+                    var cmd = new Query();
+                    cmd.Text = insert;
+                    SetNamedParameters(cmd, item);
+                    _db.ExecuteCommand(cmd);
+
+                    cmd.Text = String.Format("SELECT last_insert_rowid() FROM [{0}]", _mapping.TableName);
+                    cmd.Parameters.Clear();
+                    var rowId = _db.ExecuteScalar(cmd);
+                    item.Key = new Identifier(rowId);
+                    
+                    _db.CommitTransaction();
                 }
+
             }
             else
             {
                 var update = BuildUpdateStatement();
                 AppendFilter(update, new string[] { "id" });
-                using (var con = _db.OpenConnection())
-                {
-                    using (var cmd = con.CreateCommand())
-                    {
-                        cmd.CommandText = update.ToString();
-                        SetNamedParameters(cmd, item);
-                        cmd.Parameters.AddWithValue("@filterid", item.Key.Value);
-                        cmd.ExecuteNonQuery();
-                    }
-                }
+
+                var cmd = new Query();
+                cmd.Text = update.ToString();
+                SetNamedParameters(cmd, item);
+                cmd.Parameters.Add("filterid", item.Key.Value);
+                _db.ExecuteCommand(cmd);
+
+                
             }
         }
 
@@ -264,28 +258,26 @@ namespace Tagger.Engine.DAL.Abstract
             {
                 var select = BuildSelectStatement();
                 AppendFilter(select, new string[] { "id" });
-                using (var con = _db.OpenConnection())
+
+                var cmd = new Query();
+                cmd.Text = select.ToString();
+                cmd.Parameters.Add("filterid", key.Value);
+
+                using (var reader = _db.ExecuteReader(cmd))
                 {
-                    using (var cmd = con.CreateCommand())
+                    if (reader.HasRows)
                     {
-                        cmd.CommandText = select.ToString();
-                        cmd.Parameters.AddWithValue("@filterid", key.Value);
-                        using (var reader = cmd.ExecuteReader(System.Data.CommandBehavior.SingleRow))
-                        {
-                            if (reader.HasRows)
-                            {
-                                reader.Read();
-                                var item = NewInstance();
-                                Hydrate(ref item, reader);
-                                return item;
-                            }
-                            else
-                            {
-                                return default(T);
-                            }
-                        }
+                        reader.ReadNext();
+                        var item = NewInstance();
+                        Hydrate(ref item, reader);
+                        return item;
+                    }
+                    else
+                    {
+                        return default(T);
                     }
                 }
+
             }
             else
             {
@@ -297,19 +289,17 @@ namespace Tagger.Engine.DAL.Abstract
         {
             var select = BuildSelectStatement();
             var list = new List<T>();
-            using (var con = _db.OpenConnection())
+
+            var cmd = new Query();
+            cmd.Text = select.ToString();
+
+            using (var reader = _db.ExecuteReader(cmd))
             {
-                using (var cmd = con.CreateCommand())
+                while (reader.ReadNext())
                 {
-                    using (var reader = cmd.ExecuteReader())
-                    {
-                        while (reader.Read())
-                        {
-                            var item = NewInstance();
-                            Hydrate(ref item, reader);
-                            list.Add(item);
-                        }
-                    }
+                    var item = NewInstance();
+                    Hydrate(ref item, reader);
+                    list.Add(item);
                 }
             }
 

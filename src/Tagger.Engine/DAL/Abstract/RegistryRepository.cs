@@ -42,73 +42,67 @@ namespace Tagger.Engine.DAL.Abstract
 
         private void CreateTableIfNeeded()
         {
-            using (var con = _db.OpenConnection())
-            {
-                using (var cmd = con.CreateCommand())
-                {
-                    cmd.CommandText = string.Format("SELECT name FROM sqlite_master WHERE type='table' AND name='{0}'",
+            var cmd = new Query();
+
+            cmd.Text = string.Format("SELECT name FROM sqlite_master WHERE type='table' AND name='{0}'",
                         _mapping.TableName);
-                    using (var reader = cmd.ExecuteReader(System.Data.CommandBehavior.SingleRow))
-                    {
-                        if (!reader.HasRows)
-                        {
-                            CreateTable(con);
-                        }
-                    }
+            using (var reader = _db.ExecuteReader(cmd))
+            {
+                if (!reader.HasRows)
+                {
+                    CreateTable();
                 }
             }
-
         }
 
-        private void CreateTable(SQLiteConnection con)
+        private void CreateTable()
         {
-            using (var cmd = con.CreateCommand())
+            var sb = new StringBuilder();
+            var indexSb = new StringBuilder();
+
+            sb.AppendFormat("CREATE TABLE {0} (", _mapping.TableName);
+            bool isFirst = true;
+            foreach (var field in _mapping.FieldMapping)
             {
-                var sb = new StringBuilder();
-                var indexSb = new StringBuilder();
-
-                sb.AppendFormat("CREATE TABLE {0} (", _mapping.TableName);
-                bool isFirst = true;
-                foreach (var field in _mapping.FieldMapping)
+                if (!isFirst)
                 {
-                    if (!isFirst)
-                    {
-                        sb.Append(',');
-                    }
-
-                    sb.AppendFormat("\n [{0}] {1} NOT NULL", field.DbField, TypeExpression(field));
-                    
-                                    
-                    isFirst = false;
-
-                    if (field.Indexed == FieldIndex.Unique || field.Indexed == FieldIndex.NotUnique)
-                    {
-                        indexSb.AppendFormat("CREATE {0} INDEX {1} ON {2} ({3});\n",
-                            field.Indexed == FieldIndex.Unique ? "UNIQUE" : "",
-                            "idx_" + field.DbField,
-                            _mapping.TableName,
-                            field.DbField);
-                    }
+                    sb.Append(',');
                 }
 
-                sb.Append(",\nPRIMARY KEY (");
-                for (int i = 0; i < _keyFields.Length; i++)
+                sb.AppendFormat("\n [{0}] {1} NOT NULL", field.DbField, TypeExpression(field));
+
+
+                isFirst = false;
+
+                if (field.Indexed == FieldIndex.Unique || field.Indexed == FieldIndex.NotUnique)
                 {
-                    
-                    if (i > 0)
-                    {
-                        sb.Append(',');
-                    }
-
-                    sb.AppendFormat("[{0}]",_keyFields[i].DbField);
-
+                    indexSb.AppendFormat("CREATE {0} INDEX {1} ON {2} ({3});\n",
+                        field.Indexed == FieldIndex.Unique ? "UNIQUE" : "",
+                        "idx_" + field.DbField,
+                        _mapping.TableName,
+                        field.DbField);
                 }
-
-                sb.Append(")\n);");
-                sb.AppendLine(indexSb.ToString());
-                cmd.CommandText = sb.ToString();
-                cmd.ExecuteNonQuery();
             }
+
+            sb.Append(",\nPRIMARY KEY (");
+            for (int i = 0; i < _keyFields.Length; i++)
+            {
+
+                if (i > 0)
+                {
+                    sb.Append(',');
+                }
+
+                sb.AppendFormat("[{0}]", _keyFields[i].DbField);
+
+            }
+
+            sb.Append(")\n);");
+            sb.AppendLine(indexSb.ToString());
+
+            var cmd = new Query();
+            cmd.Text = sb.ToString();
+            _db.ExecuteCommand(cmd);
         }
 
         private string TypeExpression(FieldMapping field)
@@ -203,7 +197,7 @@ namespace Tagger.Engine.DAL.Abstract
             }
         }
 
-        private void SetNamedParameters(SQLiteCommand cmd, object data)
+        private void SetNamedParameters(Query cmd, object data)
         {
             var type = data.GetType();
             foreach (var field in _mapping.FieldMapping)
@@ -220,78 +214,64 @@ namespace Tagger.Engine.DAL.Abstract
                     paramValue = prop.GetValue(data, null);
                 }
 
-                cmd.Parameters.AddWithValue("@" + field.DbField, paramValue);
+                cmd.Parameters.Add(field.DbField, paramValue);
 
             }
         }
 
         public void Write(T item)
         {
-            using (var con = _db.OpenConnection())
+            using (var transaction = _db.BeginTransaction())
             {
-                using(var transaction = con.BeginTransaction())
-                using (var cmd = con.CreateCommand())
-                {
-                    cmd.Transaction = transaction;
-                    cmd.CommandText = BuildDeleteStatement();
-                    SetNamedParameters(cmd, item);
-                    cmd.ExecuteNonQuery();
+                var cmd = new Query();
+                cmd.Text = BuildDeleteStatement();
+                SetNamedParameters(cmd, item);
+                _db.ExecuteCommand(cmd);
 
-                    cmd.CommandText = BuildInsertStatement();
-                    cmd.ExecuteNonQuery();
-                    transaction.Commit();
-
-                }
+                cmd.Text = BuildInsertStatement();
+                _db.ExecuteCommand(cmd);
+                _db.CommitTransaction();
             }
+            
         }
 
         public void Remove(RegistryKey key)
         {
-            using (var con = _db.OpenConnection())
-            {
-                using (var cmd = con.CreateCommand())
-                {
-                    cmd.CommandText = BuildDeleteStatement();
+            var cmd = new Query();
+            cmd.Text = BuildDeleteStatement();
+            SetParametersByRecordKey(key, cmd);
+            _db.ExecuteCommand(cmd);
 
-                    SetParametersByRecordKey(key, cmd);
-
-                    cmd.ExecuteNonQuery();
-                }
-            }
         }
 
         public T FindByKey(RegistryKey key)
         {
-            using (var con = _db.OpenConnection())
-            using (var cmd = con.CreateCommand())
+            var sb = BuildSelectStatement();
+            AppendFilterByKeys(sb);
+            
+            var cmd = new Query();
+            SetParametersByRecordKey(key, cmd);
+
+            cmd.Text = sb.ToString();
+
+            using (var reader = _db.ExecuteReader(cmd))
             {
-                var sb = BuildSelectStatement();
-                AppendFilterByKeys(sb);
-
-                SetParametersByRecordKey(key, cmd);
-
-                cmd.CommandText = sb.ToString();
-
-                using (var reader = cmd.ExecuteReader())
+                if (reader.HasRows)
                 {
-                    if (reader.HasRows)
-                    {
-                        reader.Read();
-                        var item = NewInstance();
-                        Hydrate(ref item, reader);
-                        return item;
-                    }
-                    else
-                    {
-                        return default(T);
-                    }
+                    reader.ReadNext();
+                    var item = NewInstance();
+                    Hydrate(ref item, reader);
+                    return item;
+                }
+                else
+                {
+                    return default(T);
                 }
             }
             
-
         }
 
-        private void SetParametersByRecordKey(RegistryKey key, SQLiteCommand cmd)
+        private void SetParametersByRecordKey(RegistryKey key, Query cmd)
         {
             foreach (var keyItem in _keyFields)
             {
@@ -300,18 +280,18 @@ namespace Tagger.Engine.DAL.Abstract
                 {
                     keyVal = ((Identifier)keyVal).Value;
                 }
-                cmd.Parameters.AddWithValue("@" + keyItem.DbField, keyVal);
+                cmd.Parameters.Add(keyItem.DbField, keyVal);
             }
         }
 
         abstract protected T NewInstance();
 
-        private void Hydrate(ref T instance, SQLiteDataReader reader)
+        private void Hydrate(ref T instance, IQueryReader reader)
         {
             OnHydrate(ref instance, reader);
         }
 
-        protected virtual void OnHydrate(ref T instance, SQLiteDataReader reader)
+        protected virtual void OnHydrate(ref T instance, IQueryReader reader)
         {
             var type = instance.GetType();
             foreach (var field in _mapping.FieldMapping)
@@ -326,22 +306,19 @@ namespace Tagger.Engine.DAL.Abstract
         {
             var select = BuildSelectStatement();
             var list = new List<T>();
-            using (var con = _db.OpenConnection())
+
+            var cmd = new Query();
+            cmd.Text = select.ToString();
+            using (var reader = _db.ExecuteReader(cmd))
             {
-                using (var cmd = con.CreateCommand())
+                while (reader.ReadNext())
                 {
-                    using (var reader = cmd.ExecuteReader())
-                    {
-                        while (reader.Read())
-                        {
-                            var item = NewInstance();
-                            Hydrate(ref item, reader);
-                            list.Add(item);
-                        }
-                    }
+                    var item = NewInstance();
+                    Hydrate(ref item, reader);
+                    list.Add(item);
                 }
             }
-
+            
             return list;
         }
 

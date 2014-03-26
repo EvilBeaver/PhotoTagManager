@@ -108,7 +108,7 @@ namespace EngineTests
 
         private IDatabase CreateDBInstance()
         {
-            var db = new Database(_dbPath);
+            var db = new SQLiteDatabase(_dbPath);
             return db;
         }
         
