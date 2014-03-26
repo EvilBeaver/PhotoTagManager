@@ -29,6 +29,17 @@ namespace Tagger.Engine.DAL.Abstract
 
         }
 
+        public RegistryKey CreateKey()
+        {
+            var dict = new Dictionary<string, object>();
+            foreach (var keyField in _keyFields)
+            {
+                dict.Add(keyField.ObjectProperty, null);
+            }
+
+            return new RegistryKey(dict);
+        }
+
         private void CreateTableIfNeeded()
         {
             using (var con = _db.OpenConnection())
@@ -37,10 +48,12 @@ namespace Tagger.Engine.DAL.Abstract
                 {
                     cmd.CommandText = string.Format("SELECT name FROM sqlite_master WHERE type='table' AND name='{0}'",
                         _mapping.TableName);
-                    var reader = cmd.ExecuteReader(System.Data.CommandBehavior.SingleRow);
-                    if (!reader.HasRows)
+                    using (var reader = cmd.ExecuteReader(System.Data.CommandBehavior.SingleRow))
                     {
-                        CreateTable(con);
+                        if (!reader.HasRows)
+                        {
+                            CreateTable(con);
+                        }
                     }
                 }
             }
@@ -119,7 +132,7 @@ namespace Tagger.Engine.DAL.Abstract
         private string BuildDeleteStatement()
         {
             var sb = new StringBuilder();
-            sb.AppendFormat("DELETE FROM {0}\n", _mapping.TableName);
+            sb.AppendFormat("DELETE FROM [{0}]\n", _mapping.TableName);
             AppendFilterByKeys(sb);
             sb.Append(';');
 
@@ -138,11 +151,11 @@ namespace Tagger.Engine.DAL.Abstract
                     sb.Append(',');
                 }
 
-                sb.AppendLine(field.DbField);
+                sb.AppendFormat("[{0}]", field.DbField);
                 isFirst = false;
             }
 
-            sb.AppendFormat("FROM {0}", _mapping.TableName);
+            sb.AppendFormat("\nFROM [{0}]", _mapping.TableName);
 
             return sb;
         }
@@ -150,24 +163,35 @@ namespace Tagger.Engine.DAL.Abstract
         private string BuildInsertStatement()
         {
             var sb = new StringBuilder();
-            sb.AppendFormat("INSERT INTO {0}\n", _mapping.TableName);
-            sb.AppendLine("VALUES");
+            var valSb = new StringBuilder();
+            sb.AppendFormat("INSERT INTO [{0}]", _mapping.TableName);
+            valSb.Append("VALUES ");
             bool isFirst = true;
+            sb.Append(" (\n");
+            valSb.Append(" (\n");
             foreach (var field in _mapping.FieldMapping)
             {
                 if (!isFirst)
                 {
                     sb.Append(",\n");
+                    valSb.Append(",\n");
                 }
-                sb.AppendFormat("({0} = @{0})", field.DbField);
+                sb.AppendFormat("[{0}]", field.DbField);
+                valSb.AppendFormat("@{0}", field.DbField);
+                isFirst = false;
             }
+
+            sb.Append(")\n");
+            valSb.Append(")");
+            sb.Append(valSb.ToString());
             sb.Append(';');
+
             return sb.ToString();
         }
 
         private void AppendFilterByKeys(StringBuilder sb)
         {
-            sb.AppendLine("WHERE");
+            sb.AppendLine("\nWHERE");
             for (int i = 0; i < _keyFields.Length; i++)
             {
                 if (i > 0)
@@ -175,7 +199,7 @@ namespace Tagger.Engine.DAL.Abstract
                     sb.Append("AND ");
                 }
 
-                sb.AppendFormat("{0} = @{0}\n", _keyFields[i]);
+                sb.AppendFormat("[{0}] = @{0}\n", _keyFields[i].DbField);
             }
         }
 
@@ -184,7 +208,20 @@ namespace Tagger.Engine.DAL.Abstract
             var type = data.GetType();
             foreach (var field in _mapping.FieldMapping)
             {
-                cmd.Parameters.AddWithValue("@" + field.DbField, type.GetProperty(field.ObjectProperty).GetValue(data, null));
+                var prop = type.GetProperty(field.ObjectProperty);
+                object paramValue;
+                if(prop.PropertyType == typeof(Identifier))
+                {
+                    var id = (Identifier)prop.GetValue(data, null);
+                    paramValue = id.Value;
+                }
+                else
+                {
+                    paramValue = prop.GetValue(data, null);
+                }
+
+                cmd.Parameters.AddWithValue("@" + field.DbField, paramValue);
+
             }
         }
 
@@ -216,10 +253,7 @@ namespace Tagger.Engine.DAL.Abstract
                 {
                     cmd.CommandText = BuildDeleteStatement();
 
-                    foreach (var keyItem in _keyFields)
-                    {
-                        cmd.Parameters.AddWithValue("@" + keyItem.DbField, key[keyItem.ObjectProperty]);
-                    }
+                    SetParametersByRecordKey(key, cmd);
 
                     cmd.ExecuteNonQuery();
                 }
@@ -228,23 +262,21 @@ namespace Tagger.Engine.DAL.Abstract
 
         public T FindByKey(RegistryKey key)
         {
-            var sb = BuildSelectStatement();
-            AppendFilterByKeys(sb);
-
             using (var con = _db.OpenConnection())
+            using (var cmd = con.CreateCommand())
             {
-                using (var cmd = con.CreateCommand())
+                var sb = BuildSelectStatement();
+                AppendFilterByKeys(sb);
+
+                SetParametersByRecordKey(key, cmd);
+
+                cmd.CommandText = sb.ToString();
+
+                using (var reader = cmd.ExecuteReader())
                 {
-                    cmd.CommandText = BuildDeleteStatement();
-
-                    foreach (var keyItem in _keyFields)
-                    {
-                        cmd.Parameters.AddWithValue("@" + keyItem.DbField, key[keyItem.ObjectProperty]);
-                    }
-
-                    var reader = cmd.ExecuteReader();
                     if (reader.HasRows)
                     {
+                        reader.Read();
                         var item = NewInstance();
                         Hydrate(ref item, reader);
                         return item;
@@ -255,7 +287,21 @@ namespace Tagger.Engine.DAL.Abstract
                     }
                 }
             }
+            
 
+        }
+
+        private void SetParametersByRecordKey(RegistryKey key, SQLiteCommand cmd)
+        {
+            foreach (var keyItem in _keyFields)
+            {
+                object keyVal = key[keyItem.ObjectProperty];
+                if (keyVal.GetType() == typeof(Identifier))
+                {
+                    keyVal = ((Identifier)keyVal).Value;
+                }
+                cmd.Parameters.AddWithValue("@" + keyItem.DbField, keyVal);
+            }
         }
 
         abstract protected T NewInstance();
@@ -284,12 +330,14 @@ namespace Tagger.Engine.DAL.Abstract
             {
                 using (var cmd = con.CreateCommand())
                 {
-                    var reader = cmd.ExecuteReader();
-                    while (reader.Read())
+                    using (var reader = cmd.ExecuteReader())
                     {
-                        var item = NewInstance();
-                        Hydrate(ref item, reader);
-                        list.Add(item);
+                        while (reader.Read())
+                        {
+                            var item = NewInstance();
+                            Hydrate(ref item, reader);
+                            list.Add(item);
+                        }
                     }
                 }
             }

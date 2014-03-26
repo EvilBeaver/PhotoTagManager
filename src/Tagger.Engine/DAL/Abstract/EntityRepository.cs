@@ -190,11 +190,8 @@ namespace Tagger.Engine.DAL.Abstract
 
         protected virtual void OnHydrate(ref T instance, SQLiteDataReader reader)
         {
-            var id = new Identifier()
-            {
-                Value = (int)(long)reader["id"]
-            };
-
+            var id = new Identifier(reader["id"]);
+            
             instance.Key = id;
 
             var type = instance.GetType();
@@ -239,8 +236,8 @@ namespace Tagger.Engine.DAL.Abstract
                         cmd.ExecuteNonQuery();
                         cmd.CommandText = String.Format("SELECT last_insert_rowid() FROM [{0}]", _mapping.TableName);
                         cmd.Parameters.Clear();
-                        var rowId = (int)(long)cmd.ExecuteScalar();
-                        item.Key = new Identifier() { Value = rowId };
+                        var rowId = cmd.ExecuteScalar();
+                        item.Key = new Identifier(rowId);
                     }
                 }
             }
@@ -304,12 +301,14 @@ namespace Tagger.Engine.DAL.Abstract
             {
                 using (var cmd = con.CreateCommand())
                 {
-                    var reader = cmd.ExecuteReader();
-                    while (reader.Read())
+                    using (var reader = cmd.ExecuteReader())
                     {
-                        var item = NewInstance();
-                        Hydrate(ref item, reader);
-                        list.Add(item);
+                        while (reader.Read())
+                        {
+                            var item = NewInstance();
+                            Hydrate(ref item, reader);
+                            list.Add(item);
+                        }
                     }
                 }
             }

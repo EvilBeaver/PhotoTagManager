@@ -8,3 +8,10 @@
 
 /src/*.sdf
 /src/BeaverSoft.Common
+/src/TestResults/5bb2820f-00cf-4d79-ac9e-398a34ebd444
+/src/Test/EngineTests/bin/Debug
+/src/Test/EngineTests/obj/Debug/DesignTimeResolveAssemblyReferencesInput.cache
+/src/Test/EngineTests/obj/Debug/EngineTests.csproj.FileListAbsolute.txt
+/src/Test/EngineTests/obj/Debug/EngineTests.csprojResolveAssemblyReference.cache
+/src/Test/EngineTests/obj/Debug/EngineTests.dll
+/src/Test/EngineTests/obj/Debug/EngineTests.pdb

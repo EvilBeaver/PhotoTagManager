@@ -24,7 +24,7 @@ namespace EngineTests
             _db.Init();
             
             Assert.IsTrue(System.IO.File.Exists(_dbPath));
-            CleanUpDatabase(true);
+            CleanUpDatabase();
         }
 
         [TestMethod]
@@ -33,7 +33,7 @@ namespace EngineTests
             CleanUpDatabase();
             _db = CreateDBInstance();
             _db.Init();
-
+            
             DatabaseService.RegisterInstance(_db);
 
             var file = FileLink.Create(@"C:\dummy_test_file.txt");
@@ -46,8 +46,44 @@ namespace EngineTests
             Assert.IsFalse(readed == default(FileLink));
             Assert.IsTrue(readed.FullName == file.FullName);
 
-            CleanUpDatabase(true);
+            DatabaseService.FileRepository.Remove(readed);
+            readed = DatabaseService.FileRepository.FindByKey(dbObject.Key);
+            Assert.IsTrue(readed == default(FileLink));
 
+            CleanUpDatabase();
+
+        }
+
+        [TestMethod]
+        public void FavoritesRepoCheck()
+        {
+            CleanUpDatabase();
+            _db = CreateDBInstance();
+            _db.Init();
+
+            var record = new FavoritesStreamReference()
+            {
+                TableName = "folder_refs",
+                id = new Identifier(1)
+            };
+
+            var repo = FavoritesRepository.Create(_db);
+            var recordKey = repo.CreateKey();
+            recordKey["id"] = record.id;
+            recordKey["TableName"] = record.TableName;
+
+            var found = repo.FindByKey(recordKey);
+            Assert.IsTrue(found.Equals(default(FavoritesStreamReference)));
+
+            repo.Write(record);
+            found = repo.FindByKey(recordKey);
+            Assert.IsTrue(found.Equals(record));
+
+            repo.Remove(recordKey);
+            found = repo.FindByKey(recordKey);
+            Assert.IsTrue(found.Equals(default(FavoritesStreamReference)));
+
+            CleanUpDatabase();
         }
 
         private void CleanUpDatabase(bool ignoreErrors = false)

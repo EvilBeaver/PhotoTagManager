@@ -58,23 +58,8 @@ namespace Tagger.Engine.DAL
 
         public void Shutdown()
         {
-            var con = OpenConnection();
-            con.Shutdown();
-            con.Close();
-            con = null;
-        }
-
-        public int Execute(string command, object[] parameters)
-        {
-            using (var con = OpenConnection())
-            {
-                using (var cmd = con.CreateCommand())
-                {
-                    cmd.CommandText = command;
-                    cmd.Parameters.AddRange(parameters);
-                    return cmd.ExecuteNonQuery();
-                }
-            }
+            SQLiteConnection.ClearAllPools();
+            GC.Collect();
         }
 
         public void Init()

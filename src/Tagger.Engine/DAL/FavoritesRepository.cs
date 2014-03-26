@@ -19,11 +19,8 @@ namespace Tagger.Engine.DAL
 
         protected override void OnHydrate(ref FavoritesStreamReference instance, System.Data.SQLite.SQLiteDataReader reader)
         {
-            var id = new Identifier()
-            {
-                Value = (int)reader["id"]
-            };
-
+            var id = new Identifier(reader["table_id"]);
+            
             instance.id = id;
             instance.TableName = (string)reader["table"];
 
@@ -68,7 +65,7 @@ namespace Tagger.Engine.DAL
 
     public struct FavoritesStreamReference
     {
-        public string TableName;
-        public Identifier id; 
+        public string TableName { get; set; }
+        public Identifier id { get; set; } 
     }
 }
