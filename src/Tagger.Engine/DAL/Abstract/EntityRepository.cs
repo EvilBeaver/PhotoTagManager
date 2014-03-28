@@ -10,142 +10,50 @@ namespace Tagger.Engine.DAL.Abstract
     {
         private TableMapping _mapping;
         private IDatabase _db;
+        private TableManager _table;
         
         internal EntityRepository(IDatabase db, TableMapping mapping)
         {
-            _mapping = mapping;
+            _mapping = new TableMapping();
+            _mapping.TableName = mapping.TableName;
+            _mapping.FieldMapping.Add(new FieldMapping()
+            {
+                DbField = "id",
+                ObjectProperty = "Key",
+                Type = SimpleFieldType.Integer,
+                PropertyFlags = FieldProperties.AutoIncrement | FieldProperties.PrimaryKey
+            });
+
+            foreach (var item in mapping.FieldMapping)
+            {
+                _mapping.FieldMapping.Add(item);
+            }
+
             _db = db;
-            CreateTableIfNeeded();
+            _table = new TableManager(_mapping);
+            _table.CreateTableIfNeeded(_db);
         }
 
-        private void CreateTableIfNeeded()
+        private string BuildSelectStatement(params string[] filter)
         {
-            var query = new Query();
-            query.Text = string.Format("SELECT name FROM sqlite_master WHERE type='table' AND name='{0}'",
-                        _mapping.TableName);
-            using (var reader = _db.ExecuteReader(query))
-            {
-                if (!reader.HasRows)
-                {
-                    CreateTable();
-                }
-            }
-            
+            return _table.BuildSelectStatement(filter);
         }
 
-        private void CreateTable()
+        private string BuildUpdateStatement(params string[] filter)
         {
-            var sb = new StringBuilder();
-            var indexSb = new StringBuilder();
-
-            sb.AppendFormat("CREATE TABLE {0} (\n", _mapping.TableName);
-            sb.Append("id integer PRIMARY KEY AUTOINCREMENT NOT NULL");
-            foreach (var field in _mapping.FieldMapping)
-            {
-                sb.AppendFormat(",\n {0} {1} NOT NULL", field.DbField, TypeExpression(field));
-                if (field.Indexed != FieldIndex.None)
-                {
-                    indexSb.AppendFormat("CREATE {0} INDEX {1} ON {2} ({3});\n",
-                        field.Indexed == FieldIndex.Unique? "UNIQUE" : "",
-                        "idx_"+field.DbField,
-                        _mapping.TableName,
-                        field.DbField);
-                }
-            }
-            sb.Append(");\n");
-            sb.AppendLine(indexSb.ToString());
-
-            var query = new Query();
-            query.Text = sb.ToString();
-            
-            _db.ExecuteCommand(query);
-
-        }
-
-        private string TypeExpression(FieldMapping field)
-        {
-            switch (field.Type)
-            {
-                case SimpleFieldType.Integer:
-                    return "integer";
-                case SimpleFieldType.Double:
-                    return "real";
-                case SimpleFieldType.Date:
-                    return "integer";
-                case SimpleFieldType.String:
-                    return string.Format("varchar({0})", field.Length);
-                default:
-                    return "";
-            }
-        }
-
-        private StringBuilder BuildSelectStatement()
-        {
-            var sb = new StringBuilder();
-            sb.Append("SELECT\n");
-            sb.AppendFormat("[{0}]", "id");
-            foreach (var field in _mapping.FieldMapping)
-            {
-                sb.AppendFormat(",\n[{0}]", field.DbField);
-            }
-
-            sb.AppendFormat("\nFROM [{0}]", _mapping.TableName);
-
-            return sb;
-        }
-
-        private StringBuilder BuildUpdateStatement()
-        {
-            var sb = new StringBuilder();
-            sb.AppendFormat("UPDATE {0}\n", _mapping.TableName);
-            bool isFirst = true;
-            foreach (var field in _mapping.FieldMapping)
-            {
-                if (!isFirst)
-                {
-                    sb.Append(",\n");
-                }
-                sb.AppendFormat("SET {0} = @{0}", field.DbField);
-                isFirst = false;
-            }
-
-            return sb;
+            return _table.BuildUpdateStatement(filter);
         }
 
         private string BuildInsertStatement()
         {
-            var sb = new StringBuilder();
-            var valSb = new StringBuilder();
-            sb.AppendFormat("INSERT INTO [{0}]", _mapping.TableName);
-            valSb.Append("VALUES ");
-            bool isFirst = true;
-            sb.Append(" (\n");
-            valSb.Append(" (\n");
-            foreach (var field in _mapping.FieldMapping)
-            {
-                if (!isFirst)
-                {
-                    sb.Append(",\n");
-                    valSb.Append(",\n");
-                }
-                sb.AppendFormat("[{0}]",  field.DbField);
-                valSb.AppendFormat("@{0}", field.DbField);
-                isFirst = false;
-            }
 
-            sb.Append(")\n");
-            valSb.Append(")");
-            sb.Append(valSb.ToString());
-            sb.Append(';');
+            return _table.BuildInsertStatement();
 
-            return sb.ToString();
         }
 
-        private StringBuilder BuildDeleteStatement()
+        private string BuildDeleteStatement(params string[] filter)
         {
-            var sb = new StringBuilder();
-            sb.AppendFormat("DELETE FROM {0}", _mapping.TableName);
-            return sb;
+            return _table.BuildDeleteStatement();
         }
 
         private void AppendFilter(StringBuilder sb, string[] filterColumns)
@@ -165,15 +73,6 @@ namespace Tagger.Engine.DAL.Abstract
                 }
 
                 sb.AppendFormat("{0} = @filter{0}", filterColumns[i]);
-            }
-        }
-
-        private void SetNamedParameters(Query query, object data, string paramPrefix = "")
-        {
-            var type = data.GetType();
-            foreach (var field in _mapping.FieldMapping)
-            {
-                query.Parameters.Add(paramPrefix + field.DbField, type.GetProperty(field.ObjectProperty).GetValue(data, null));
             }
         }
 
@@ -204,11 +103,10 @@ namespace Tagger.Engine.DAL.Abstract
         {
             if (!item.Key.IsEmpty())
             {
-                var delStatement = BuildDeleteStatement();
-                AppendFilter(delStatement, new string[] { "id" });
-
+                var delStatement = BuildDeleteStatement("id");
+                
                 var cmd = new Query();
-                cmd.Text = delStatement.ToString();
+                cmd.Text = delStatement;
                 cmd.Parameters.Add("filterid", item.Key.Value);
                 _db.ExecuteCommand(cmd);
 
@@ -225,7 +123,7 @@ namespace Tagger.Engine.DAL.Abstract
                 {
                     var cmd = new Query();
                     cmd.Text = insert;
-                    SetNamedParameters(cmd, item);
+                    _table.SetQueryParameters(cmd, item);
                     _db.ExecuteCommand(cmd);
 
                     cmd.Text = String.Format("SELECT last_insert_rowid() FROM [{0}]", _mapping.TableName);
@@ -239,12 +137,11 @@ namespace Tagger.Engine.DAL.Abstract
             }
             else
             {
-                var update = BuildUpdateStatement();
-                AppendFilter(update, new string[] { "id" });
-
+                var update = BuildUpdateStatement("id");
+                
                 var cmd = new Query();
-                cmd.Text = update.ToString();
-                SetNamedParameters(cmd, item);
+                cmd.Text = update;
+                _table.SetQueryParameters(cmd, item);
                 cmd.Parameters.Add("filterid", item.Key.Value);
                 _db.ExecuteCommand(cmd);
 
@@ -256,11 +153,10 @@ namespace Tagger.Engine.DAL.Abstract
         {
             if (!key.IsEmpty())
             {
-                var select = BuildSelectStatement();
-                AppendFilter(select, new string[] { "id" });
+                var select = BuildSelectStatement("id");
 
                 var cmd = new Query();
-                cmd.Text = select.ToString();
+                cmd.Text = select;
                 cmd.Parameters.Add("filterid", key.Value);
 
                 using (var reader = _db.ExecuteReader(cmd))
@@ -291,7 +187,7 @@ namespace Tagger.Engine.DAL.Abstract
             var list = new List<T>();
 
             var cmd = new Query();
-            cmd.Text = select.ToString();
+            cmd.Text = select;
 
             using (var reader = _db.ExecuteReader(cmd))
             {

@@ -39,10 +39,10 @@ namespace Tagger.Engine.DAL
             map.TableName = "files";
             map.AddFieldFor("Name", SimpleFieldType.String, 100);
             fieldDescr = map.AddFieldFor("FullName", SimpleFieldType.String, 260);
-            fieldDescr.Indexed = FieldIndex.Unique;
+            fieldDescr.PropertyFlags = FieldProperties.UniqueIndex;
             
             fieldDescr = map.AddFieldFor("MD5", SimpleFieldType.String, 32);
-            fieldDescr.Indexed = FieldIndex.NotUnique;
+            fieldDescr.PropertyFlags = FieldProperties.Indexed;
 
             return map;
         }

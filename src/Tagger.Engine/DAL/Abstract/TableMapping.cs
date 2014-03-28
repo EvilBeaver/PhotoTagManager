@@ -41,7 +41,7 @@ namespace Tagger.Engine.DAL.Abstract
         public string ObjectProperty;
         public int Length;
         public SimpleFieldType Type;
-        public FieldIndex Indexed;
+        public FieldProperties PropertyFlags;
     }
 
     enum SimpleFieldType
@@ -52,11 +52,13 @@ namespace Tagger.Engine.DAL.Abstract
         Date
     }
 
-    enum FieldIndex
+    [Flags]
+    enum FieldProperties
     {
-        None,
-        NotUnique,
-        Unique,
-        PrimaryKey
+        None = 0,
+        Indexed = 1,
+        UniqueIndex = 2,
+        PrimaryKey = 4,
+        AutoIncrement = 8
     }
 }

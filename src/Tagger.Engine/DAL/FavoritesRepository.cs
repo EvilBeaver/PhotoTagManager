@@ -48,14 +48,14 @@ namespace Tagger.Engine.DAL
             fieldDescr.ObjectProperty = "TableName";
             fieldDescr.Type = SimpleFieldType.String;
             fieldDescr.Length = 100;
-            fieldDescr.Indexed = FieldIndex.PrimaryKey;
+            fieldDescr.PropertyFlags = FieldProperties.PrimaryKey;
             map.FieldMapping.Add(fieldDescr);
 
             fieldDescr = new FieldMapping();
             fieldDescr.DbField = "table_id";
             fieldDescr.ObjectProperty = "id";
             fieldDescr.Type = SimpleFieldType.Integer;
-            fieldDescr.Indexed = FieldIndex.PrimaryKey;
+            fieldDescr.PropertyFlags = FieldProperties.PrimaryKey;
             map.FieldMapping.Add(fieldDescr);
 
             return map;

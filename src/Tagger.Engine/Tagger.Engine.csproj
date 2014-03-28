@@ -69,7 +69,7 @@
     <Compile Include="DAL\Abstract\IPersistable.cs" />
     <Compile Include="DAL\Abstract\Query.cs" />
     <Compile Include="DAL\Abstract\RegistryRepository.cs" />
-    <Compile Include="DAL\Abstract\TableGateway.cs" />
+    <Compile Include="DAL\Abstract\TableManager.cs" />
     <Compile Include="DAL\Abstract\TableMapping.cs" />
     <Compile Include="DAL\Database.cs" />
     <Compile Include="DAL\DatabaseService.cs" />
