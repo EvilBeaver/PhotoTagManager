@@ -6,12 +6,12 @@ using Tagger.Engine.DAL;
 namespace EngineTests
 {
     [TestClass]
-    public class UnitTest1
+    public class RepositoryTests
     {
         private string _dbPath;
         private IDatabase _db;
 
-        public UnitTest1()
+        public RepositoryTests()
         {
             _dbPath = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "TESTDB.DB3");
         }
