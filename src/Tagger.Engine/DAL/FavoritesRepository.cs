@@ -6,7 +6,7 @@ using Tagger.Engine.DAL.Abstract;
 
 namespace Tagger.Engine.DAL
 {
-    public class FavoritesRepository : RegistryRepository<FavoritesStreamReference>
+    class FavoritesRepository : RegistryRepository<FavoritesStreamReference>
     {
         private FavoritesRepository(IDatabase db, TableMapping mapping) : base(db, mapping)
         {

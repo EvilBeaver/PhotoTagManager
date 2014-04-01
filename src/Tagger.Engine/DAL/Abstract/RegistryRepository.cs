@@ -6,27 +6,25 @@ using System.Text;
 
 namespace Tagger.Engine.DAL.Abstract
 {
-    public abstract class RegistryRepository<T>
+    abstract class RegistryRepository<T> : TableGatewayBase
     {
         private IDatabase _db;
-        private TableMapping _mapping;
         private FieldMapping[] _keyFields;
-        private TableManager _table;
+        
 
-        internal RegistryRepository(IDatabase db, TableMapping mapping)
+        internal RegistryRepository(IDatabase db, TableMapping mapping) : base(mapping)
         {
             _db = db;
-            _mapping = mapping;
 
-            var keys = _mapping.FieldMapping.Where(x=>x.PropertyFlags.HasFlag(FieldProperties.PrimaryKey)).ToArray();
+            var keys = Mapping.FieldMapping.Where(x=>x.PropertyFlags.HasFlag(FieldProperties.PrimaryKey)).ToArray();
             if (keys.Length == 0)
             {
                 throw new ArgumentException("No primary key defined");
             }
 
             _keyFields = keys;
-            _table = new TableManager(_mapping);
-            _table.CreateTableIfNeeded(_db);
+            
+            base.CreateTableIfNeeded(_db);
 
         }
 
@@ -41,26 +39,16 @@ namespace Tagger.Engine.DAL.Abstract
             return new RegistryKey(dict);
         }
 
-        private string BuildDeleteStatement()
-        {
-            return _table.BuildDeleteStatement(CreateFilterByKeys());
-        }
-
         private string BuildSelectStatement(bool filtered)
         {
             if (filtered)
             {
-                return _table.BuildSelectStatement(CreateFilterByKeys());
+                return BuildSelectStatement(CreateFilterByKeys());
             }
             else
             {
-                return _table.BuildSelectStatement();
+                return BuildSelectStatement();
             }
-        }
-
-        private string BuildInsertStatement()
-        {
-            return _table.BuildInsertStatement();
         }
 
         private string[] CreateFilterByKeys()
@@ -74,7 +62,7 @@ namespace Tagger.Engine.DAL.Abstract
             {
                 var cmd = new Query();
                 cmd.Text = BuildDeleteStatement();
-                _table.SetQueryParameters(cmd, item);
+                SetQueryParameters(cmd, item);
                 _db.ExecuteCommand(cmd);
 
                 cmd.Text = BuildInsertStatement();
@@ -125,7 +113,7 @@ namespace Tagger.Engine.DAL.Abstract
                 {
                     keyVal = ((Identifier)keyVal).Value;
                 }
-                cmd.Parameters.Add(keyItem.DbField, keyVal);
+                cmd.Parameters.Add("filter"+keyItem.DbField, keyVal);
             }
         }
 
@@ -139,7 +127,7 @@ namespace Tagger.Engine.DAL.Abstract
         protected virtual void OnHydrate(ref T instance, IQueryReader reader)
         {
             var type = instance.GetType();
-            foreach (var field in _mapping.FieldMapping)
+            foreach (var field in Mapping.FieldMapping)
             {
                 var prop = type.GetProperty(field.ObjectProperty);
                 prop.SetValue(instance, reader[field.DbField], null);

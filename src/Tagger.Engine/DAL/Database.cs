@@ -182,6 +182,7 @@ namespace Tagger.Engine.DAL
                 {
                     cmd.Dispose();
                     con.Dispose();
+                    throw;
                 }
                 return reader;
                 

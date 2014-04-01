@@ -6,17 +6,13 @@ using System.Text;
 
 namespace Tagger.Engine.DAL.Abstract
 {
-    public abstract class EntityRepository<T> : IDataRepository<T> where T : IPersistable
+    abstract class EntityRepository<T> : TableGatewayBase, IDataRepository<T> where T : IPersistable
     {
-        private TableMapping _mapping;
         private IDatabase _db;
-        private TableManager _table;
         
-        internal EntityRepository(IDatabase db, TableMapping mapping)
+        internal EntityRepository(IDatabase db, TableMapping mapping) : base(mapping)
         {
-            _mapping = new TableMapping();
-            _mapping.TableName = mapping.TableName;
-            _mapping.FieldMapping.Add(new FieldMapping()
+            Mapping.FieldMapping.Insert(0, new FieldMapping()
             {
                 DbField = "id",
                 ObjectProperty = "Key",
@@ -24,60 +20,15 @@ namespace Tagger.Engine.DAL.Abstract
                 PropertyFlags = FieldProperties.AutoIncrement | FieldProperties.PrimaryKey
             });
 
-            foreach (var item in mapping.FieldMapping)
-            {
-                _mapping.FieldMapping.Add(item);
-            }
-
             _db = db;
-            _table = new TableManager(_mapping);
-            _table.CreateTableIfNeeded(_db);
+            
+            base.CreateTableIfNeeded(_db);
         }
 
-        private string BuildSelectStatement(params string[] filter)
-        {
-            return _table.BuildSelectStatement(filter);
-        }
-
-        private string BuildUpdateStatement(params string[] filter)
-        {
-            return _table.BuildUpdateStatement(filter);
-        }
-
-        private string BuildInsertStatement()
-        {
-
-            return _table.BuildInsertStatement();
-
-        }
-
-        private string BuildDeleteStatement(params string[] filter)
-        {
-            return _table.BuildDeleteStatement();
-        }
-
-        private void AppendFilter(StringBuilder sb, string[] filterColumns)
-        {
-            if(filterColumns.Length == 0)
-            {
-                return;
-            }
-
-            sb.AppendLine("\nWHERE");
-
-            for (int i = 0; i < filterColumns.Length; i++)
-            {
-                if (i > 0)
-                {
-                    sb.Append("\nAND ");
-                }
-
-                sb.AppendFormat("{0} = @filter{0}", filterColumns[i]);
-            }
-        }
+        #region Entity Hydration methods
 
         abstract protected T NewInstance();
-        
+
         private void Hydrate(ref T instance, IQueryReader reader)
         {
             OnHydrate(ref instance, reader);
@@ -86,16 +37,21 @@ namespace Tagger.Engine.DAL.Abstract
         protected virtual void OnHydrate(ref T instance, IQueryReader reader)
         {
             var id = new Identifier(reader["id"]);
-            
+
             instance.Key = id;
 
             var type = instance.GetType();
-            foreach (var field in _mapping.FieldMapping)
-	        {
+            foreach (var field in Mapping.FieldMapping)
+            {
                 var prop = type.GetProperty(field.ObjectProperty);
-                prop.SetValue(instance, reader[field.DbField], null);
-	        }
+                if (prop != null)
+                {
+                    prop.SetValue(instance, reader[field.DbField], null);
+                }
+            }
         }
+
+        #endregion
 
         #region IDataRepository members
 
@@ -123,10 +79,10 @@ namespace Tagger.Engine.DAL.Abstract
                 {
                     var cmd = new Query();
                     cmd.Text = insert;
-                    _table.SetQueryParameters(cmd, item);
+                    SetQueryParameters(cmd, item);
                     _db.ExecuteCommand(cmd);
 
-                    cmd.Text = String.Format("SELECT last_insert_rowid() FROM [{0}]", _mapping.TableName);
+                    cmd.Text = String.Format("SELECT last_insert_rowid() FROM [{0}]", Mapping.TableName);
                     cmd.Parameters.Clear();
                     var rowId = _db.ExecuteScalar(cmd);
                     item.Key = new Identifier(rowId);
@@ -141,7 +97,7 @@ namespace Tagger.Engine.DAL.Abstract
                 
                 var cmd = new Query();
                 cmd.Text = update;
-                _table.SetQueryParameters(cmd, item);
+                SetQueryParameters(cmd, item);
                 cmd.Parameters.Add("filterid", item.Key.Value);
                 _db.ExecuteCommand(cmd);
 
