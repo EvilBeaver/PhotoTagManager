@@ -13,6 +13,11 @@ namespace Tagger.Engine.DAL
 
         static DatabaseService()
         {
+            InitRepoCollection();
+        }
+
+        private static void InitRepoCollection()
+        {
             _repos = new Dictionary<Type, object>();
             _repos[typeof(FileRepository)] = null;
             _repos[typeof(FavoritesRepository)] = null;
@@ -79,7 +84,8 @@ namespace Tagger.Engine.DAL
                         ((IDisposable)item).Dispose();
                     }
                 }
-                _repos.Clear();
+                
+                InitRepoCollection();
                 _serviceInstance = null;
             }
         }
@@ -89,6 +95,14 @@ namespace Tagger.Engine.DAL
             get
             {
                 return InitRepository<FileRepository>();
+            }
+        }
+
+        internal static FavoritesRepository FavoritesRepository
+        {
+            get
+            {
+                return InitRepository<FavoritesRepository>();
             }
         }
 

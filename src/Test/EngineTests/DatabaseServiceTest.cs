@@ -8,8 +8,34 @@ namespace EngineTests
     public class DatabaseServiceTest
     {
         [TestMethod]
-        public void TestMethod1()
+        public void DBServiceRepositoriesOK()
         {
+            var db = new DBDummy();
+            Assert.IsNull(DatabaseService.GetInstance());
+
+            DatabaseService.RegisterInstance(db);
+            Assert.AreSame(db, DatabaseService.GetInstance());
+
+            Assert.IsTrue(DatabaseService.FileRepository is FileRepository);
+            Assert.IsTrue(DatabaseService.FavoritesRepository is FavoritesRepository);
+
+            DatabaseService.ShutdownInstance();
+            Assert.IsNull(DatabaseService.GetInstance());
+
+            try
+            {
+                var fr = DatabaseService.FileRepository;
+            }
+            catch(InvalidOperationException e)
+            {
+                if (e.Message == "Database is not specified")
+                {
+                    return;
+                }
+            }
+
+            Assert.Fail("Exception \"Database is not specified\" was not thrown");
+
         }
     }
 
@@ -53,17 +79,17 @@ namespace EngineTests
 
         public IQueryReader ExecuteReader(Tagger.Engine.DAL.Abstract.Query query)
         {
-            throw new NotImplementedException();
+            return new DummyDBReader();
         }
 
         public int ExecuteCommand(Tagger.Engine.DAL.Abstract.Query query)
         {
-            throw new NotImplementedException();
+            return 0;
         }
 
         public object ExecuteScalar(Tagger.Engine.DAL.Abstract.Query query)
         {
-            throw new NotImplementedException();
+            return null;
         }
 
         #endregion
@@ -87,12 +113,12 @@ namespace EngineTests
 
         public bool HasRows
         {
-            get { throw new NotImplementedException(); }
+            get { return true; }
         }
 
         public bool ReadNext()
         {
-            throw new NotImplementedException();
+            return true;
         }
 
         public object this[string field]
@@ -106,7 +132,7 @@ namespace EngineTests
 
         public void Dispose()
         {
-            throw new NotImplementedException();
+            
         }
 
         #endregion
