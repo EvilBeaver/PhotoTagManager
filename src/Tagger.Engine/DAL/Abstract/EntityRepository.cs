@@ -41,7 +41,7 @@ namespace Tagger.Engine.DAL.Abstract
             instance.Key = id;
 
             var type = instance.GetType();
-            foreach (var field in Mapping.FieldMapping)
+            foreach (var field in Mapping.FieldMapping.Where(x=>!x.PropertyFlags.HasFlag(FieldProperties.PrimaryKey)))
             {
                 var prop = type.GetProperty(field.ObjectProperty);
                 if (prop != null)

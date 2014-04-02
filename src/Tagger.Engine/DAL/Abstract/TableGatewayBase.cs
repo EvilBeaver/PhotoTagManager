@@ -92,7 +92,7 @@ namespace Tagger.Engine.DAL.Abstract
             return sb.ToString();
         }
 
-        public string BuildInsertStatement()
+        protected string BuildInsertStatement()
         {
             var sb = new StringBuilder();
 
@@ -117,7 +117,7 @@ namespace Tagger.Engine.DAL.Abstract
             return sb.ToString();
         }
 
-        public string BuildSelectStatement(params string[] filterFields)
+        protected string BuildSelectStatement(params string[] filterFields)
         {
             var sb = new StringBuilder();
             sb.Append("SELECT\n");
@@ -138,7 +138,7 @@ namespace Tagger.Engine.DAL.Abstract
             return sb.ToString();
         }
 
-        public string BuildUpdateStatement(params string[] filterFields)
+        protected string BuildUpdateStatement(params string[] filterFields)
         {
             var sb = new StringBuilder();
             sb.AppendFormat("UPDATE {0}\n", _mapping.TableName);
@@ -155,7 +155,7 @@ namespace Tagger.Engine.DAL.Abstract
             return sb.ToString();
         }
 
-        public string BuildDeleteStatement(params string[] filterFields)
+        protected string BuildDeleteStatement(params string[] filterFields)
         {
             var sb = new StringBuilder();
             sb.AppendFormat("DELETE FROM {0}", _mapping.TableName);
@@ -165,12 +165,12 @@ namespace Tagger.Engine.DAL.Abstract
             return sb.ToString();
         }
 
-        public void SetQueryParameters(Query cmd, object data)
+        protected void SetQueryParameters(Query cmd, object data)
         {
             SetQueryParameters(cmd, data, "");
         }
 
-        public void SetQueryParameters(Query cmd, object data, string paramPrefix)
+        protected void SetQueryParameters(Query cmd, object data, string paramPrefix)
         {
             var type = data.GetType();
             foreach (var field in _mapping.FieldMapping)

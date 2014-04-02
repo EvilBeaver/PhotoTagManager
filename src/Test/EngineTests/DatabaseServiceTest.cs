@@ -8,16 +8,13 @@ namespace EngineTests
     public class DatabaseServiceTest
     {
         [TestMethod]
-        public void DBServiceRepositoriesOK()
+        public void DBServiceAccessOK()
         {
             var db = new DBDummy();
             Assert.IsNull(DatabaseService.GetInstance());
 
             DatabaseService.RegisterInstance(db);
             Assert.AreSame(db, DatabaseService.GetInstance());
-
-            Assert.IsTrue(DatabaseService.FileRepository is FileRepository);
-            Assert.IsTrue(DatabaseService.FavoritesRepository is FavoritesRepository);
 
             DatabaseService.ShutdownInstance();
             Assert.IsNull(DatabaseService.GetInstance());
@@ -35,6 +32,22 @@ namespace EngineTests
             }
 
             Assert.Fail("Exception \"Database is not specified\" was not thrown");
+
+        }
+
+        [TestMethod]
+        public void RepositoryPropertiesCheck()
+        {
+            var db = new DBDummy();
+            Assert.IsNull(DatabaseService.GetInstance());
+
+            DatabaseService.RegisterInstance(db);
+
+            Assert.IsTrue(DatabaseService.FileRepository is FileRepository);
+            Assert.IsTrue(DatabaseService.FavoritesRepository is FavoritesRepository);
+            Assert.IsTrue(DatabaseService.FolderRefRepository is FolderRefRepository);
+
+            DatabaseService.ShutdownInstance();
 
         }
     }

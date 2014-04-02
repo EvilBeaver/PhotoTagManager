@@ -21,6 +21,7 @@ namespace Tagger.Engine.DAL
             _repos = new Dictionary<Type, object>();
             _repos[typeof(FileRepository)] = null;
             _repos[typeof(FavoritesRepository)] = null;
+            _repos[typeof(FolderRefRepository)] = null;
         }
 
         private static T InitRepository<T>()
@@ -42,6 +43,10 @@ namespace Tagger.Engine.DAL
                 else if (type == typeof(FavoritesRepository))
                 {
                     instance = FavoritesRepository.Create();
+                }
+                else if (type == typeof(FolderRefRepository))
+                {
+                    instance = FolderRefRepository.Create();
                 }
                 else
                 {
@@ -103,6 +108,14 @@ namespace Tagger.Engine.DAL
             get
             {
                 return InitRepository<FavoritesRepository>();
+            }
+        }
+
+        internal static FolderRefRepository FolderRefRepository
+        {
+            get
+            {
+                return InitRepository<FolderRefRepository>();
             }
         }
 

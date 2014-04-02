@@ -86,6 +86,31 @@ namespace EngineTests
             CleanUpDatabase();
         }
 
+        [TestMethod]
+        public void FolderRefRepoCheck()
+        {
+            CleanUpDatabase();
+            _db = CreateDBInstance();
+            _db.Init();
+
+            DatabaseService.RegisterInstance(_db);
+
+            var folderRef = new FolderRefEntity();
+            folderRef.Path = @"C:\Users\";
+
+            DatabaseService.FolderRefRepository.Write(folderRef);
+
+            Assert.IsFalse(folderRef.Key.IsEmpty());
+
+            var readed = DatabaseService.FolderRefRepository.FindByKey(folderRef.Key);
+            Assert.AreEqual(folderRef.Key.Value, readed.Key.Value);
+
+            DatabaseService.FolderRefRepository.Remove(folderRef);
+            Assert.IsNull(DatabaseService.FolderRefRepository.FindByKey(folderRef.Key));
+
+            CleanUpDatabase();
+        }
+
         private void CleanUpDatabase(bool ignoreErrors = false)
         {
             if (System.IO.File.Exists(_dbPath))

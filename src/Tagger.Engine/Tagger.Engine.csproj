@@ -73,9 +73,9 @@
     <Compile Include="DAL\Abstract\TableMapping.cs" />
     <Compile Include="DAL\Database.cs" />
     <Compile Include="DAL\DatabaseService.cs" />
-    <Compile Include="DAL\IPersistableImageStream.cs" />
     <Compile Include="DAL\FavoritesRepository.cs" />
     <Compile Include="DAL\FileRepository.cs" />
+    <Compile Include="DAL\FolderRefRepository.cs" />
     <Compile Include="DAL\IDatabase.cs" />
     <Compile Include="DirectoryImageStream.cs" />
     <Compile Include="FavoritesImageStream.cs" />
