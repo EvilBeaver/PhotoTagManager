@@ -6,7 +6,7 @@ using System.Text;
 
 namespace Tagger.Engine.DAL.Abstract
 {
-    public abstract class EntityRepository<T> : IDataRepository<T> where T : IPersistable
+    abstract class EntityRepository<T> : IDataRepository<T> where T : IPersistable
     {
         private TableMapping _mapping;
         private IDatabase _db;

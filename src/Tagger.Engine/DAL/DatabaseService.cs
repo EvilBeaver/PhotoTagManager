@@ -14,18 +14,24 @@ namespace Tagger.Engine.DAL
         {
         }
 
-        public static void RegisterInstance(IDatabase instance)
+        public static void InitByConnectionString(string connString)
+        {
+            var db = new Tagger.Engine.DAL.SQLiteDatabase(connString);
+            Tagger.Engine.DAL.DatabaseService.RegisterInstance(db);
+        }
+
+        internal static void RegisterInstance(IDatabase instance)
         {
             _serviceInstance = instance;
             _serviceInstance.Init();
         }
 
-        public static IDatabase GetInstance()
+        internal static IDatabase GetInstance()
         {
             return _serviceInstance;
         }
 
-        public static void ShutdownInstance()
+        internal static void ShutdownInstance()
         {
             if (_serviceInstance != null)
             {
@@ -35,7 +41,7 @@ namespace Tagger.Engine.DAL
             }
         }
 
-        public static FileRepository FileRepository
+        internal static FileRepository FileRepository
         {
             get
             {

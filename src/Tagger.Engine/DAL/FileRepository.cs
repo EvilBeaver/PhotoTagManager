@@ -7,7 +7,7 @@ using Tagger.Engine.DAL.Abstract;
 
 namespace Tagger.Engine.DAL
 {
-    public class FileRepository : EntityRepository<FileLink>
+    class FileRepository : EntityRepository<FileLink>
     {
         private FileRepository(IDatabase db, TableMapping mapping) : base(db, mapping)
         {

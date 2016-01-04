@@ -5,7 +5,7 @@ using System.Text;
 
 namespace Tagger.Engine.DAL
 {
-    public struct Identifier
+    struct Identifier
     {
         private int? _value;
 

@@ -9,7 +9,7 @@ using Tagger.Engine.DAL.Abstract;
 
 namespace Tagger.Engine.DAL
 {
-    public class SQLiteDatabase : IDatabase, IQueryExecutor
+    class SQLiteDatabase : IDatabase, IQueryExecutor
     {
         private string _dbFileName;
         private SQLiteTransactionalQueryExecutor _currentTransaction;

@@ -5,7 +5,7 @@ using System.Text;
 
 namespace Tagger.Engine.DAL
 {
-    public interface IDataRepository<T> where T:IPersistable
+    interface IDataRepository<T> where T:IPersistable
     {
         void Remove(T item);
         void Write(T item);

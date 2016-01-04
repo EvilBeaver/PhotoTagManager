@@ -6,7 +6,7 @@ using System.Text;
 
 namespace Tagger.Engine.DAL.Abstract
 {
-    public abstract class RegistryRepository<T>
+    abstract class RegistryRepository<T>
     {
         private IDatabase _db;
         private TableMapping _mapping;
@@ -169,7 +169,7 @@ namespace Tagger.Engine.DAL.Abstract
 
     }
 
-    public class RegistryKey : IEnumerable<KeyValuePair<string, object>>
+    class RegistryKey : IEnumerable<KeyValuePair<string, object>>
     {
         private Dictionary<string, object> _keys;
 

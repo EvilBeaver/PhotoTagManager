@@ -7,7 +7,7 @@ using System.Text;
 
 namespace Tagger.Engine.DAL.Abstract
 {
-    public class Query
+    class Query
     {
         public Query()
         {

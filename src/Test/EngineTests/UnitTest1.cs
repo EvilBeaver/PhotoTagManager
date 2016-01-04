@@ -38,7 +38,7 @@ namespace EngineTests
 
             var file = FileLink.Create(@"C:\dummy_test_file.txt");
             DatabaseService.FileRepository.Write(file);
-
+            
             var dbObject = (IPersistable)file;
             Assert.IsFalse(dbObject.Key.IsEmpty());
 
