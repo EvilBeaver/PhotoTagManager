@@ -6,12 +6,12 @@ using Tagger.Engine.DAL;
 namespace EngineTests
 {
     [TestClass]
-    public class UnitTest1
+    public class RepositoryTests
     {
         private string _dbPath;
         private IDatabase _db;
 
-        public UnitTest1()
+        public RepositoryTests()
         {
             _dbPath = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "TESTDB.DB3");
         }
@@ -82,6 +82,31 @@ namespace EngineTests
             repo.Remove(recordKey);
             found = repo.FindByKey(recordKey);
             Assert.IsTrue(found.Equals(default(FavoritesStreamReference)));
+
+            CleanUpDatabase();
+        }
+
+        [TestMethod]
+        public void FolderRefRepoCheck()
+        {
+            CleanUpDatabase();
+            _db = CreateDBInstance();
+            _db.Init();
+
+            DatabaseService.RegisterInstance(_db);
+
+            var folderRef = new FolderRefEntity();
+            folderRef.Path = @"C:\Users\";
+
+            DatabaseService.FolderRefRepository.Write(folderRef);
+
+            Assert.IsFalse(folderRef.Key.IsEmpty());
+
+            var readed = DatabaseService.FolderRefRepository.FindByKey(folderRef.Key);
+            Assert.AreEqual(folderRef.Key.Value, readed.Key.Value);
+
+            DatabaseService.FolderRefRepository.Remove(folderRef);
+            Assert.IsNull(DatabaseService.FolderRefRepository.FindByKey(folderRef.Key));
 
             CleanUpDatabase();
         }

@@ -8,10 +8,57 @@ namespace Tagger.Engine.DAL
     public static class DatabaseService
     {
         private static IDatabase _serviceInstance;
-        private static FileRepository _fileRepo;
+        
+        private static Dictionary<Type, object> _repos;
 
         static DatabaseService()
         {
+            InitRepoCollection();
+        }
+
+        private static void InitRepoCollection()
+        {
+            _repos = new Dictionary<Type, object>();
+            _repos[typeof(FileRepository)] = null;
+            _repos[typeof(FavoritesRepository)] = null;
+            _repos[typeof(FolderRefRepository)] = null;
+        }
+
+        private static T InitRepository<T>()
+        {
+            if (GetInstance() == null)
+            {
+                throw new InvalidOperationException("Database is not specified");
+            }
+
+            var type = typeof(T);
+            var instance = _repos[type];
+            if (instance == null)
+            {
+                // ugly if-else. will be refactored if will cause problems
+                if (type == typeof(FileRepository))
+                {
+                    instance = FileRepository.Create();
+                }
+                else if (type == typeof(FavoritesRepository))
+                {
+                    instance = FavoritesRepository.Create();
+                }
+                else if (type == typeof(FolderRefRepository))
+                {
+                    instance = FolderRefRepository.Create();
+                }
+                else
+                {
+                    throw new InvalidOperationException();
+                }
+
+                _repos[type] = instance;
+
+            }
+
+            return (T)instance;
+
         }
 
         public static void InitByConnectionString(string connString)
@@ -22,6 +69,11 @@ namespace Tagger.Engine.DAL
 
         internal static void RegisterInstance(IDatabase instance)
         {
+            if (_serviceInstance != null)
+            {
+                ShutdownInstance();
+            }
+
             _serviceInstance = instance;
             _serviceInstance.Init();
         }
@@ -36,7 +88,15 @@ namespace Tagger.Engine.DAL
             if (_serviceInstance != null)
             {
                 _serviceInstance.Shutdown();
-                _fileRepo = null;
+                foreach (var item in _repos.Values)
+                {
+                    if (item is IDisposable)
+                    {
+                        ((IDisposable)item).Dispose();
+                    }
+                }
+                
+                InitRepoCollection();
                 _serviceInstance = null;
             }
         }
@@ -45,19 +105,25 @@ namespace Tagger.Engine.DAL
         {
             get
             {
-                if (_fileRepo == null)
-                {
-                    if (GetInstance() == null)
-                    {
-                        throw new InvalidOperationException("Database is not specified");
-                    }
-
-                    _fileRepo = FileRepository.Create();
-                }
-
-                return _fileRepo;
+                return InitRepository<FileRepository>();
             }
         }
-        
+
+        internal static FavoritesRepository FavoritesRepository
+        {
+            get
+            {
+                return InitRepository<FavoritesRepository>();
+            }
+        }
+
+        internal static FolderRefRepository FolderRefRepository
+        {
+            get
+            {
+                return InitRepository<FolderRefRepository>();
+            }
+        }
+
     }
 }

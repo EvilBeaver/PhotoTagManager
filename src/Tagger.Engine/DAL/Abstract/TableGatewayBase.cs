@@ -5,32 +5,21 @@ using System.Text;
 
 namespace Tagger.Engine.DAL.Abstract
 {
-    class TableManager
+    abstract class TableGatewayBase
     {
         private TableMapping _mapping;
 
-        public TableManager(TableMapping mapping)
+        public TableGatewayBase(TableMapping mapping)
         {
             _mapping = mapping;
         }
 
-        public string TableName
+        protected TableMapping Mapping
         {
-            get
-            {
-                return _mapping.TableName;
-            }
+            get { return _mapping; }
         }
 
-        public IEnumerable<FieldMapping> Fields 
-        {
-            get
-            {
-                return _mapping.FieldMapping;
-            }
-        }
-
-        public void CreateTableIfNeeded(IDatabase db)
+        protected void CreateTableIfNeeded(IDatabase db)
         {
             var query = new Query();
             query.Text = string.Format("SELECT name FROM sqlite_master WHERE type='table' AND name='{0}'",
@@ -103,7 +92,7 @@ namespace Tagger.Engine.DAL.Abstract
             return sb.ToString();
         }
 
-        public string BuildInsertStatement()
+        protected string BuildInsertStatement()
         {
             var sb = new StringBuilder();
 
@@ -112,8 +101,11 @@ namespace Tagger.Engine.DAL.Abstract
 
             foreach (var field in _mapping.FieldMapping)
             {
-                fieldList.Add(string.Format("[{0}]", field.DbField));
-                values.Add(string.Format("@{0}", field.DbField));
+                if (!field.PropertyFlags.HasFlag(FieldProperties.AutoIncrement))
+                {
+                    fieldList.Add(string.Format("[{0}]", field.DbField));
+                    values.Add(string.Format("@{0}", field.DbField));
+                }
             }
 
             sb.AppendFormat("INSERT INTO [{0}](\n", _mapping.TableName);
@@ -125,16 +117,20 @@ namespace Tagger.Engine.DAL.Abstract
             return sb.ToString();
         }
 
-        public string BuildSelectStatement(params string[] filterFields)
+        protected string BuildSelectStatement(params string[] filterFields)
         {
             var sb = new StringBuilder();
             sb.Append("SELECT\n");
-            sb.AppendFormat("[{0}]", "id");
-            foreach (var field in _mapping.FieldMapping)
+
+            string[] expr = new string[_mapping.FieldMapping.Count];
+
+            for (int i = 0; i < expr.Length; i++)
             {
-                sb.AppendFormat(",\n[{0}]", field.DbField);
+                var field = _mapping.FieldMapping[i];
+                expr[i] = string.Format("[{0}]", field.DbField);
             }
 
+            sb.Append(JoinExpressions(expr));
             sb.AppendFormat("\nFROM [{0}]", _mapping.TableName);
 
             AppendFilter(sb, filterFields);
@@ -142,7 +138,7 @@ namespace Tagger.Engine.DAL.Abstract
             return sb.ToString();
         }
 
-        public string BuildUpdateStatement(params string[] filterFields)
+        protected string BuildUpdateStatement(params string[] filterFields)
         {
             var sb = new StringBuilder();
             sb.AppendFormat("UPDATE {0}\n", _mapping.TableName);
@@ -159,7 +155,7 @@ namespace Tagger.Engine.DAL.Abstract
             return sb.ToString();
         }
 
-        public string BuildDeleteStatement(params string[] filterFields)
+        protected string BuildDeleteStatement(params string[] filterFields)
         {
             var sb = new StringBuilder();
             sb.AppendFormat("DELETE FROM {0}", _mapping.TableName);
@@ -169,29 +165,32 @@ namespace Tagger.Engine.DAL.Abstract
             return sb.ToString();
         }
 
-        public void SetQueryParameters(Query cmd, object data)
+        protected void SetQueryParameters(Query cmd, object data)
         {
             SetQueryParameters(cmd, data, "");
         }
 
-        public void SetQueryParameters(Query cmd, object data, string paramPrefix)
+        protected void SetQueryParameters(Query cmd, object data, string paramPrefix)
         {
             var type = data.GetType();
             foreach (var field in _mapping.FieldMapping)
             {
                 var prop = type.GetProperty(field.ObjectProperty);
-                object paramValue;
-                if (prop.PropertyType == typeof(Identifier))
+                if (prop != null)
                 {
-                    var id = (Identifier)prop.GetValue(data, null);
-                    paramValue = id.Value;
-                }
-                else
-                {
-                    paramValue = prop.GetValue(data, null);
-                }
+                    object paramValue;
+                    if (prop.PropertyType == typeof(Identifier))
+                    {
+                        var id = (Identifier)prop.GetValue(data, null);
+                        paramValue = id.Value;
+                    }
+                    else
+                    {
+                        paramValue = prop.GetValue(data, null);
+                    }
 
-                cmd.Parameters.Add(paramPrefix+field.DbField, paramValue);
+                    cmd.Parameters.Add(paramPrefix + field.DbField, paramValue);
+                }
 
             }
         }

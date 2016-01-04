@@ -9,7 +9,37 @@ namespace Tagger.Engine
     {
         private IList<ImageInfo> _images;
         private IList<IHostableImageStream> _childItems;
-        
+
+        public void AddToFavorites(IImageStream stream)
+        {
+            // TODO:
+            // make an autopersistable stream feature
+
+            var dirStream = stream as DirectoryImageStream;
+            if (dirStream != null)
+            {
+                var db = DAL.DatabaseService.GetInstance();
+                using (var transaction = db.BeginTransaction())
+                {
+                    var folderRef = new DAL.FolderRefEntity();
+                    folderRef.Path = dirStream.Path;
+
+                    DAL.DatabaseService.FolderRefRepository.Write(folderRef);
+
+                    var fav_item = new DAL.FavoritesStreamReference();
+                    fav_item.id = folderRef.Key;
+                    fav_item.TableName = "folder_refs";
+
+                    DAL.DatabaseService.FavoritesRepository.Write(fav_item);
+
+                    db.CommitTransaction();
+
+                }
+
+            }
+
+        }
+
         #region IImageStream Members
 
         public string Name

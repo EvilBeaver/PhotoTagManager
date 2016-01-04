@@ -31,6 +31,7 @@ namespace Tagger.Engine.DAL
 
             FileRepository.Create(this);
             FavoritesRepository.Create(this);
+            FolderRefRepository.Create(this);
         }
 
         private bool DatabaseFileExists()
@@ -182,6 +183,7 @@ namespace Tagger.Engine.DAL
                 {
                     cmd.Dispose();
                     con.Dispose();
+                    throw;
                 }
                 return reader;
                 
